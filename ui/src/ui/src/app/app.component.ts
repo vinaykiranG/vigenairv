@@ -156,6 +156,10 @@ export class AppComponent {
   fadeOut = false;
   demandGenAssets = true;
   analyseAudio = true;
+  logoFile?: File;
+  logoUrl?: string;
+  logoBase64?: string;
+  logoFileName?: string;
   previousRuns: string[] | undefined;
   previousRenders: PreviousRender[] | undefined;
   encodedUserId: string | undefined;
@@ -334,6 +338,22 @@ export class AppComponent {
 
   onFileSelected(file?: File) {
     this.selectedFile = file;
+  }
+
+  onLogoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (file) {
+      this.logoFile = file;
+      this.logoFileName = StringUtil.gcsSanitise(file.name);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        this.logoUrl = dataUrl;
+        this.logoBase64 = dataUrl.split(',')[1];
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   getCurrentCropAreaFrame(entities: any[]):
@@ -1107,6 +1127,7 @@ export class AppComponent {
       use_continuous_audio: this.audioSettings === 'continuous',
       fade_out: this.fadeOut,
       overlay_type: this.overlaySettings,
+      logo_file: this.logoFileName,
     };
     const selectedScenes = selectedSegments.map(
       (segment: AvSegment) => segment.av_segment_id
@@ -1178,6 +1199,10 @@ export class AppComponent {
         : 'segment';
     this.fadeOut = variant.render_settings.fade_out;
     this.overlaySettings = variant.render_settings.overlay_type!;
+    this.logoFileName = variant.render_settings.logo_file;
+    if (this.logoFileName) {
+      this.logoUrl = `${CONFIG.cloudStorage.authenticatedEndpointBase}/${CONFIG.cloudStorage.bucket}/${encodeURIComponent(this.folder)}/${this.logoFileName}`;
+    }
     this.closeRenderQueueSidenav();
     setTimeout(() => {
       this.loadingVariant = false;
@@ -1204,6 +1229,8 @@ export class AppComponent {
           w: this.previewVideoElem.nativeElement.videoWidth,
           h: this.previewVideoElem.nativeElement.videoHeight,
         },
+        logo: this.logoBase64,
+        logoFileName: this.logoFileName,
       })
       .subscribe({
         next: combosFolder => {

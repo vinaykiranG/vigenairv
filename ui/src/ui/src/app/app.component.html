@@ -329,6 +329,7 @@ limitations under the License.
             />
           </video>
           <canvas #magicCanvas></canvas>
+          <img *ngIf="logoUrl" [src]="logoUrl" class="logo-overlay" />
           <div
             #canvasDragElement
             class="canvas-drag-element"
@@ -441,6 +442,23 @@ limitations under the License.
             <mat-icon>auto_awesome</mat-icon>Generate variants
           </button>
         </div>
+      </div>
+      <div class="row" style="margin-top: 0px">
+        <mat-expansion-panel [disabled]="loading" style="width: 100%">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="prompts-panel">
+              <mat-icon class="panel-icon">branding_watermark</mat-icon>
+              <span>Personalisation</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onLogoSelected($event)"
+            [disabled]="loading"
+          />
+          <img *ngIf="logoUrl" [src]="logoUrl" class="logo-preview" />
+        </mat-expansion-panel>
       </div>
       <div class="row" style="margin-top: 0px">
         <mat-expansion-panel [disabled]="loading" style="width: 100%">

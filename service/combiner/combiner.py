@@ -63,6 +63,7 @@ class VideoVariantRenderSettings:
   use_continuous_audio: bool = False
   fade_out: bool = False
   overlay_type: Utils.RenderOverlayType = None
+  logo_file: Optional[str] = None
 
   def __init__(self, **kwargs):
     field_names = set([f.name for f in dataclasses.fields(self)])
@@ -79,7 +80,8 @@ class VideoVariantRenderSettings:
         f'use_music_overlay={self.use_music_overlay}, '
         f'use_continuous_audio={self.use_continuous_audio}, '
         f'fade_out={self.fade_out}, '
-        f'overlay_type={self.overlay_type})'
+        f'overlay_type={self.overlay_type}, '
+        f'logo_file={self.logo_file})'
     )
 
 
@@ -641,7 +643,7 @@ def _render_video_variant(
     video_variant: VideoVariant,
     vision_model: GenerativeModel,
     video_language: str,
-) -> Dict[str, str]:
+  ) -> Dict[str, str]:
   """Renders a video variant in all formats.
 
   Args:
@@ -711,6 +713,34 @@ def _render_video_variant(
           f'{video_variant.variant_id} using ffmpeg'
       ),
   )
+  logo_local_path = None
+  if video_variant.render_settings.logo_file:
+    logo_local_path = StorageService.download_gcs_file(
+        file_path=Utils.TriggerFile(
+            f'{gcs_folder_path}/{video_variant.render_settings.logo_file}'
+        ),
+        bucket_name=gcs_bucket_name,
+        output_dir=output_dir,
+    )
+    if logo_local_path:
+      Utils.execute_subprocess_commands(
+          cmds=[
+              'ffmpeg',
+              '-y',
+              '-i',
+              horizontal_combo_path,
+              '-i',
+              logo_local_path,
+              '-filter_complex',
+              'overlay=W-w-10:H-h-10',
+              '-codec:a',
+              'copy',
+              horizontal_combo_path,
+          ],
+          description=(
+              f'overlay logo for horizontal variant {video_variant.variant_id}'
+          ),
+      )
   rendered_paths = {
       Utils.RenderFormatType.HORIZONTAL.value: {
           'path': horizontal_combo_name
@@ -778,6 +808,7 @@ def _render_video_variant(
         ),
         video_filter=format_instructions['blur_filter'],
         ffmpeg_cmds=format_ffmpeg_cmds,
+        logo_file_path=logo_local_path,
     )
 
   StorageService.upload_gcs_dir(
@@ -866,6 +897,7 @@ def _render_format(
     generate_image_assets: bool,
     video_filter: str,
     ffmpeg_cmds: Optional[Sequence[str]],
+    logo_file_path: Optional[str] = None,
 ) -> Dict[str, Union[str, Sequence[str]]]:
   """Renders a video variant in a specific format.
 
@@ -914,6 +946,26 @@ def _render_format(
             'blur filter using ffmpeg'
         ),
     )
+  if logo_file_path:
+    tmp_output = f'{output_video_path}.tmp'
+    os.replace(output_video_path, tmp_output)
+    Utils.execute_subprocess_commands(
+        cmds=[
+            'ffmpeg',
+            '-y',
+            '-i',
+            tmp_output,
+            '-i',
+            logo_file_path,
+            '-filter_complex',
+            'overlay=W-w-10:H-h-10',
+            '-codec:a',
+            'copy',
+            output_video_path,
+        ],
+        description=(f'overlay logo for {format_type} variant {variant_id}'),
+    )
+    os.remove(tmp_output)
   output = {
       'path': format_name,
   }

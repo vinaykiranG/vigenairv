@@ -274,3 +274,16 @@ mat-divider {
   margin-bottom: 16px;
   justify-content: start;
 }
+
+.logo-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  max-width: 100px;
+  pointer-events: none;
+}
+
+.logo-preview {
+  max-width: 100px;
+  margin-top: 8px;
+}
