@@ -80,6 +80,7 @@ export interface RenderSettings {
   use_continuous_audio: boolean;
   fade_out: boolean;
   overlay_type?: OverlayType;
+  logo_file?: string;
 }
 
 export interface RenderQueue {
@@ -88,6 +89,8 @@ export interface RenderQueue {
   squareCropAnalysis: any;
   verticalCropAnalysis: any;
   sourceDimensions: { w: number; h: number };
+  logo?: string;
+  logoFileName?: string;
 }
 
 export interface RenderQueueVariant {

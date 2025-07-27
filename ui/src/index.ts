@@ -161,6 +161,15 @@ function renderVariants(gcsFolder: string, renderQueue: RenderQueue): string {
     );
   }
 
+  if (renderQueue.logo && renderQueue.logoFileName) {
+    StorageManager.uploadFile(
+      renderQueue.logo,
+      folder,
+      renderQueue.logoFileName,
+      'image/png'
+    );
+  }
+
   const encodedRenderQueueJson = Utilities.base64Encode(
     JSON.stringify(renderQueue.queue),
     Utilities.Charset.UTF_8
