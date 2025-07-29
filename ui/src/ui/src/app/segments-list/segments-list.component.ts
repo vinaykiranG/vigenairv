@@ -22,6 +22,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
   Component,
   ElementRef,
@@ -49,6 +50,7 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatChipsModule,
@@ -78,6 +80,7 @@ export class SegmentsListComponent {
   segmentCanvasElems?: QueryList<ElementRef<HTMLCanvasElement>>;
 
   segmentMarkerPositions: Record<string, number[]> = {};
+  legalDisclaimerTexts: Record<string, string> = {};
   splitting = false;
 
   CONFIG = CONFIG;
@@ -229,5 +232,14 @@ export class SegmentsListComponent {
       (segment: AvSegment) => segment.av_segment_id === segmentId
     ).splitting = true;
     this.clearSegmentMarkers(segmentId);
+  }
+
+  applyLegalDisclaimer(segmentId: string) {
+    const segment = this.segmentList!.find(
+      (seg: AvSegment) => seg.av_segment_id === segmentId
+    );
+    if (segment) {
+      segment.legal_disclaimer_text = this.legalDisclaimerTexts[segmentId];
+    }
   }
 }

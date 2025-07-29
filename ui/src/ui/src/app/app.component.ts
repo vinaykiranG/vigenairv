@@ -1097,6 +1097,7 @@ export class AppComponent {
         start_s: segment.start_s,
         end_s: segment.end_s,
         segment_screenshot_uri: segment.segment_screenshot_uri,
+        legal_disclaimer_text: segment.legal_disclaimer_text,
       };
     });
     const renderSettings: RenderSettings = {

@@ -117,6 +117,12 @@ limitations under the License.
             <mat-chip *ngIf="segmentMode === 'preview'" class="duration-chip"
               >{{ segment.duration_s.toFixed(2) }}s</mat-chip
             >
+            <div
+              *ngIf="segmentMode === 'preview' && segment.legal_disclaimer_text"
+              style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); color: white; font-size: 0.85em; pointer-events: none; z-index: 10;"
+            >
+              {{ segment.legal_disclaimer_text }}
+            </div>
           </div>
           <div class="current-segment-info" *ngIf="segmentMode === 'segments'">
             <span class="segment-number">
@@ -186,6 +192,22 @@ limitations under the License.
                   [disabled]="!hasSegmentMarkers(segment.av_segment_id)"
                 >
                   <mat-icon>delete_forever</mat-icon>Clear markers
+                </button>
+              </div>
+              <div class="marker-buttons" style="margin-top: 8px;">
+                <input
+                  type="text"
+                  [(ngModel)]="legalDisclaimerTexts[segment.av_segment_id]"
+                  placeholder="Legal disclaimer"
+                  style="flex: 1; margin-right: 4px;"
+                />
+                <button
+                  type="button"
+                  mat-mini-button
+                  color="primary"
+                  (click)="applyLegalDisclaimer(segment.av_segment_id)"
+                >
+                  Apply
                 </button>
               </div>
             }

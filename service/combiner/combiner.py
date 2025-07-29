@@ -96,6 +96,7 @@ class VideoVariantSegment:
   av_segment_id: int
   start_s: float
   end_s: float
+  legal_disclaimer_text: str | None = None
 
   def __init__(self, **kwargs):
     field_names = set([f.name for f in dataclasses.fields(self)])
@@ -107,7 +108,8 @@ class VideoVariantSegment:
     return (
         f'VideoVariantSegment(av_segment_id={self.av_segment_id}, '
         f'start_s={self.start_s}, '
-        f'end_s={self.end_s})'
+        f'end_s={self.end_s}, '
+        f'legal_disclaimer_text={self.legal_disclaimer_text})'
     )
 
 
@@ -688,6 +690,12 @@ def _render_video_variant(
       video_duration,
   )
 
+  legal_disclaimers = [
+      (segment.legal_disclaimer_text, segment.start_s, segment.end_s)
+      for segment in video_variant.av_segments.values()
+      if getattr(segment, 'legal_disclaimer_text', None)
+  ]
+
   ffmpeg_cmds = _get_variant_ffmpeg_commands(
       video_file_path=video_file_path,
       speech_track_path=speech_track_path,
@@ -698,6 +706,7 @@ def _render_video_variant(
       full_av_select_filter=full_av_select_filter,
       music_overlay_select_filter=music_overlay_select_filter,
       continuous_audio_select_filter=continuous_audio_select_filter,
+      legal_disclaimers=legal_disclaimers,
   )
 
   horizontal_combo_name = f'combo_{video_variant.variant_id}_h{video_ext}'
@@ -764,6 +773,7 @@ def _render_video_variant(
           full_av_select_filter=full_av_select_filter,
           music_overlay_select_filter=music_overlay_select_filter,
           continuous_audio_select_filter=continuous_audio_select_filter,
+          legal_disclaimers=legal_disclaimers,
       )
     rendered_paths[format_type] = _render_format(
         vision_model=vision_model,
@@ -821,6 +831,7 @@ def _get_variant_ffmpeg_commands(
     full_av_select_filter: str,
     music_overlay_select_filter: str,
     continuous_audio_select_filter: str,
+    legal_disclaimers: Optional[Sequence[Tuple[str, float, float]]] = None,
 ):
   ffmpeg_cmds = [
       'ffmpeg',
@@ -840,6 +851,18 @@ def _get_variant_ffmpeg_commands(
       ffmpeg_filter = [continuous_audio_select_filter]
     elif music_overlay:
       ffmpeg_filter = [music_overlay_select_filter, '-ac', '2']
+  if legal_disclaimers:
+    disclaimer_filter = ffmpeg_filter[0]
+    last_label = 'outv'
+    for i, (text, start, end) in enumerate(legal_disclaimers):
+      out_label = 'outv' if i == len(legal_disclaimers) - 1 else f'ld{i}'
+      escaped = text.replace("'", "\\'").replace(':', '\\:')
+      disclaimer_filter += (
+          f";[{last_label}]drawtext=text='{escaped}':x=(w-text_w)/2:y=h-line_h-10"
+          f":fontcolor=white:fontsize=24:box=1:boxcolor=black@0.5:enable='between(t,{start},{end})'[{out_label}]"
+      )
+      last_label = out_label
+    ffmpeg_filter = [disclaimer_filter]
   ffmpeg_cmds.extend([
       '-filter_complex',
   ] + ffmpeg_filter + [
