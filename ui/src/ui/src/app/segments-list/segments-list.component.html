@@ -118,7 +118,7 @@ limitations under the License.
               >{{ segment.duration_s.toFixed(2) }}s</mat-chip
             >
             <div
-              *ngIf="segmentMode === 'preview' && segment.legal_disclaimer_text"
+              *ngIf="segment.legal_disclaimer_text"
               style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); color: white; font-size: 0.85em; pointer-events: none; z-index: 10;"
             >
               {{ segment.legal_disclaimer_text }}

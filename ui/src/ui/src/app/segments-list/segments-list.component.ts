@@ -239,7 +239,12 @@ export class SegmentsListComponent {
       (seg: AvSegment) => seg.av_segment_id === segmentId
     );
     if (segment) {
-      segment.legal_disclaimer_text = this.legalDisclaimerTexts[segmentId];
+      const text = this.legalDisclaimerTexts[segmentId]?.trim();
+      if (text) {
+        segment.legal_disclaimer_text = text;
+      } else {
+        delete segment.legal_disclaimer_text;
+      }
     }
   }
 }
