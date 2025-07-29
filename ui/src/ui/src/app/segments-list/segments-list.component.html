@@ -80,18 +80,37 @@ limitations under the License.
             "
           >
             @if (segmentMode === 'preview' || allowSelection) {
-              <img
-                [class.filmstrip-img]="segmentMode === 'preview'"
-                [class.current-segment]="
-                  segmentMode === 'preview' &&
-                  currentSegmentId === segment.av_segment_id
-                "
-                attr.id="segment-{{ segment.av_segment_id }}"
-                [class.current-segment]="
-                  currentSegmentId === segment.av_segment_id
-                "
-                src="{{ segment.segment_screenshot_uri.replace('.0', '') }}"
-              />
+              <div style="position: relative; display: inline-block">
+                <img
+                  [class.filmstrip-img]="segmentMode === 'preview'"
+                  [class.current-segment]="
+                    segmentMode === 'preview' &&
+                    currentSegmentId === segment.av_segment_id
+                  "
+                  attr.id="segment-{{ segment.av_segment_id }}"
+                  [class.current-segment]="
+                    currentSegmentId === segment.av_segment_id
+                  "
+                  src="{{ segment.segment_screenshot_uri.replace('.0', '') }}"
+                />
+                <div
+                  *ngIf="segment.legal_disclaimer_text"
+                  style="
+                    position: absolute;
+                    bottom: 8px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.5);
+                    color: white;
+                    font-size: 0.85em;
+                    pointer-events: none;
+                    z-index: 10;
+                    padding: 2px 6px;
+                  "
+                >
+                  {{ segment.legal_disclaimer_text }}
+                </div>
+              </div>
             } @else {
               <div style="position: relative">
                 <video
@@ -109,6 +128,23 @@ limitations under the License.
                   class="video-canvas"
                   attr.id="vid-{{ segment.av_segment_id }}"
                 ></canvas>
+                <div
+                  *ngIf="segment.legal_disclaimer_text"
+                  style="
+                    position: absolute;
+                    bottom: 8px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.5);
+                    color: white;
+                    font-size: 0.85em;
+                    pointer-events: none;
+                    z-index: 10;
+                    padding: 2px 6px;
+                  "
+                >
+                  {{ segment.legal_disclaimer_text }}
+                </div>
               </div>
             }
             <mat-icon class="selection-icon" *ngIf="allowSelection">
@@ -117,12 +153,6 @@ limitations under the License.
             <mat-chip *ngIf="segmentMode === 'preview'" class="duration-chip"
               >{{ segment.duration_s.toFixed(2) }}s</mat-chip
             >
-            <div
-              *ngIf="segment.legal_disclaimer_text"
-              style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); color: white; font-size: 0.85em; pointer-events: none; z-index: 10;"
-            >
-              {{ segment.legal_disclaimer_text }}
-            </div>
           </div>
           <div class="current-segment-info" *ngIf="segmentMode === 'segments'">
             <span class="segment-number">
