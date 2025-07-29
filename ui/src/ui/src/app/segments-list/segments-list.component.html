@@ -193,22 +193,22 @@ limitations under the License.
                 >
                   <mat-icon>delete_forever</mat-icon>Clear markers
                 </button>
-              </div>
-              <div class="marker-buttons" style="margin-top: 8px;">
-                <input
-                  type="text"
-                  [(ngModel)]="legalDisclaimerTexts[segment.av_segment_id]"
-                  placeholder="Legal disclaimer"
-                  style="flex: 1; margin-right: 4px;"
-                />
-                <button
-                  type="button"
-                  mat-mini-button
-                  color="primary"
-                  (click)="applyLegalDisclaimer(segment.av_segment_id)"
-                >
-                  Apply
-                </button>
+                <div style="display: flex; margin-top: 8px;">
+                  <input
+                    type="text"
+                    [(ngModel)]="legalDisclaimerTexts[segment.av_segment_id]"
+                    placeholder="Legal disclaimer"
+                    style="flex: 1; margin-right: 4px;"
+                  />
+                  <button
+                    type="button"
+                    mat-mini-button
+                    color="primary"
+                    (click)="applyLegalDisclaimer(segment.av_segment_id)"
+                  >
+                    Apply
+                  </button>
+                </div>
               </div>
             }
           </div>
