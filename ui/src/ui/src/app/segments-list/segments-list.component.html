@@ -92,6 +92,9 @@ limitations under the License.
                 "
                 src="{{ segment.segment_screenshot_uri.replace('.0', '') }}"
               />
+              <div class="legal-overlay" *ngIf="segment.legal_disclaimer">
+                {{ segment.legal_disclaimer }}
+              </div>
             } @else {
               <div style="position: relative">
                 <video
@@ -109,6 +112,9 @@ limitations under the License.
                   class="video-canvas"
                   attr.id="vid-{{ segment.av_segment_id }}"
                 ></canvas>
+                <div class="legal-overlay" *ngIf="segment.legal_disclaimer">
+                  {{ segment.legal_disclaimer }}
+                </div>
               </div>
             }
             <mat-icon class="selection-icon" *ngIf="allowSelection">
@@ -186,6 +192,13 @@ limitations under the License.
                   [disabled]="!hasSegmentMarkers(segment.av_segment_id)"
                 >
                   <mat-icon>delete_forever</mat-icon>Clear markers
+                </button>
+                <mat-form-field style="width: 200px; margin-left: 8px" subscriptSizing="dynamic">
+                  <mat-label>Legal Disclaimer</mat-label>
+                  <input matInput [(ngModel)]="segment.legalInput" />
+                </mat-form-field>
+                <button mat-mini-button color="primary" (click)="applyLegalDisclaimer(segment.av_segment_id)">
+                  Apply
                 </button>
               </div>
             }

@@ -37,6 +37,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FormsModule } from '@angular/forms';
 
 import { CONFIG } from '../../../../config';
 import {
@@ -55,6 +56,7 @@ import {
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    FormsModule,
     CdkDropList,
     CdkDrag,
     ScrollingModule,
@@ -206,6 +208,15 @@ export class SegmentsListComponent {
     context?.clearRect(0, 0, canvas?.width ?? 0, canvas?.height ?? 0);
     this.segmentMarkerPositions[segmentId] = [];
     this.segmentMarkers[segmentId] = [];
+  }
+
+  applyLegalDisclaimer(segmentId: string) {
+    const segment = this.segmentList!.find(
+      (s: AvSegment) => s.av_segment_id === segmentId
+    );
+    if (segment) {
+      segment.legal_disclaimer = (segment as any).legalInput || '';
+    }
   }
 
   drawMarker(segmentId: string, marker: SegmentMarker) {

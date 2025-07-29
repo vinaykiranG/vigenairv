@@ -153,6 +153,20 @@ video {
   height: var(--filmstrip-image-height);
 }
 
+.legal-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 4px;
+  pointer-events: none;
+  max-width: 100%;
+  text-align: center;
+}
+
 .active-segment .drag-element::before {
   content: '';
   position: absolute;
