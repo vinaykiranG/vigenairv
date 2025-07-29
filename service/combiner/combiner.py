@@ -690,11 +690,19 @@ def _render_video_variant(
       video_duration,
   )
 
-  legal_disclaimers = [
-      (segment.legal_disclaimer_text, segment.start_s, segment.end_s)
-      for segment in video_variant.av_segments.values()
-      if getattr(segment, 'legal_disclaimer_text', None)
-  ]
+  legal_disclaimers = []
+  current_offset = 0.0
+  for segment in video_variant.av_segments.values():
+    duration = segment.end_s - segment.start_s
+    if getattr(segment, 'legal_disclaimer_text', None):
+      legal_disclaimers.append(
+          (
+              segment.legal_disclaimer_text,
+              current_offset,
+              current_offset + duration,
+          )
+      )
+    current_offset += duration
 
   ffmpeg_cmds = _get_variant_ffmpeg_commands(
       video_file_path=video_file_path,
