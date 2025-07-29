@@ -192,6 +192,7 @@ export class AppComponent {
   businessObjectives = Object.values(CONFIG.vertexAi.abcdBusinessObjectives);
   segmentMarkers: Record<string, SegmentMarker[]> = {};
   segmentSplitting = false;
+  legalOverlayText = '';
 
   @ViewChild('VideoComboComponent') VideoComboComponent?: VideoComboComponent;
   @ViewChild('previewVideoElem')
@@ -1363,5 +1364,9 @@ export class AppComponent {
       },
       error: err => this.failHandler(err),
     });
+  }
+
+  setLegalOverlay(text: string) {
+    this.legalOverlayText = text;
   }
 }

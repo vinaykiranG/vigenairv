@@ -31,12 +31,15 @@ import {
   QueryList,
   ViewChildren,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 import { CONFIG } from '../../../../config';
 import {
@@ -55,6 +58,9 @@ import {
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
     CdkDropList,
     CdkDrag,
     ScrollingModule,
@@ -71,6 +77,9 @@ export class SegmentsListComponent {
 
   @Output() seekToSegmentEvent = new EventEmitter<string>();
   @Output() segmentSplitEvent = new EventEmitter<SegmentMarker[]>();
+  @Output() legalTextApplied = new EventEmitter<string>();
+
+  legalText = '';
 
   @ViewChildren('segmentVideoElem')
   segmentVideoElems?: QueryList<ElementRef<HTMLVideoElement>>;
@@ -229,5 +238,9 @@ export class SegmentsListComponent {
       (segment: AvSegment) => segment.av_segment_id === segmentId
     ).splitting = true;
     this.clearSegmentMarkers(segmentId);
+  }
+
+  applyLegalText() {
+    this.legalTextApplied.emit(this.legalText);
   }
 }
