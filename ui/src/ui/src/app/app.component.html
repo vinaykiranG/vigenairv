@@ -308,6 +308,7 @@ limitations under the License.
           [segmentMarkers]="segmentMarkers"
           (seekToSegmentEvent)="seekToSegment($event)"
           (segmentSplitEvent)="splitSegment($event)"
+          (legalTextApplied)="setLegalOverlay($event)"
         ></segments-list>
         <div
           [hidden]="segmentModeToggle.value !== 'preview'"
@@ -338,6 +339,7 @@ limitations under the License.
             [cdkDragFreeDragPosition]="dragPosition"
             style="visibility: hidden"
           ></div>
+          <div *ngIf="legalOverlayText" class="legal-overlay">{{ legalOverlayText }}</div>
         </div>
       </div>
       <div class="row">

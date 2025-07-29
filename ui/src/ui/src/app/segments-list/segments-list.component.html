@@ -193,14 +193,22 @@ limitations under the License.
         </div>
       </div>
     }
+    </div>
   </div>
-</div>
 
-<div
-  *ngIf="segmentList === undefined"
-  style="
-    display: flex;
-    flex-direction: column;
+  <div class="legal-input-row" style="display: flex; align-items: center; gap: 8px; margin: 8px 0">
+    <mat-form-field style="flex: 1" appearance="outline">
+      <mat-label>Enter Legal Text</mat-label>
+      <input matInput [(ngModel)]="legalText" />
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="applyLegalText()">Apply</button>
+  </div>
+
+  <div
+    *ngIf="segmentList === undefined"
+    style="
+      display: flex;
+      flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 320px;
