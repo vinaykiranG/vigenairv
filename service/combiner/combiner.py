@@ -96,6 +96,7 @@ class VideoVariantSegment:
   av_segment_id: int
   start_s: float
   end_s: float
+  legal_disclaimer: str | None = None
 
   def __init__(self, **kwargs):
     field_names = set([f.name for f in dataclasses.fields(self)])
@@ -107,7 +108,8 @@ class VideoVariantSegment:
     return (
         f'VideoVariantSegment(av_segment_id={self.av_segment_id}, '
         f'start_s={self.start_s}, '
-        f'end_s={self.end_s})'
+        f'end_s={self.end_s}, '
+        f'legal_disclaimer={self.legal_disclaimer})'
     )
 
 
@@ -677,6 +679,16 @@ def _render_video_variant(
       )
   )
   video_duration = Utils.get_media_duration(video_file_path)
+  sorted_segments = sorted(
+      video_variant.av_segments.values(), key=lambda s: s.start_s
+  )
+  legal_overlays = []
+  cum = 0
+  for seg in sorted_segments:
+    seg_duration = seg.end_s - seg.start_s
+    if seg.legal_disclaimer:
+      legal_overlays.append((cum, cum + seg_duration, seg.legal_disclaimer))
+    cum += seg_duration
   (
       full_av_select_filter,
       music_overlay_select_filter,
@@ -686,6 +698,7 @@ def _render_video_variant(
       has_audio,
       video_variant.render_settings,
       video_duration,
+      legal_overlays,
   )
 
   ffmpeg_cmds = _get_variant_ffmpeg_commands(
@@ -1328,6 +1341,7 @@ def _build_ffmpeg_filters(
     has_audio: bool,
     render_settings: VideoVariantRenderSettings,
     video_duration: float,
+    legal_overlays: Optional[Sequence[Tuple[float, float, str]]] = None,
 ) -> Tuple[str, str, str]:
   """Builds the ffmpeg filters.
 
@@ -1383,12 +1397,13 @@ def _build_ffmpeg_filters(
     case Utils.RenderOverlayType.VARIANT_START.value | _:
       overlay_start = variant_first_segment_start
 
+  base_video_label = '[basev]'
   full_av_select_filter = ''.join(
       video_select_filter + audio_select_filter + select_filter_concat
-      + [f'concat=n={idx}:v=1:a=1[outv][outa]', fade_out_filter]
+      + [f'concat=n={idx}:v=1:a=1{base_video_label}[outa]', fade_out_filter]
   ) if has_audio else ''.join(
       video_select_filter + select_filter_concat
-      + [f'concat=n={idx}:v=1[outv]']
+      + [f'concat=n={idx}:v=1{base_video_label}']
   )
 
   music_overlay_select_filter = ''.join(
@@ -1397,7 +1412,7 @@ def _build_ffmpeg_filters(
           f"[2:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
           ',asetpts=N/SR/TB[music];'
       ] + select_filter_concat + [
-          f'concat=n={idx}:v=1:a=1[outv][tempa];',
+          f'concat=n={idx}:v=1:a=1[basev][tempa];',
           '[tempa][music]amerge=inputs=2[outa]',
           fade_out_filter,
       ]
@@ -1407,8 +1422,34 @@ def _build_ffmpeg_filters(
           f"[0:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
           ',asetpts=N/SR/TB[outa];'
       ] + [entry for entry in select_filter_concat if entry.startswith('[v')]
-      + [f'concat=n={idx}:v=1[outv]', fade_out_filter]
+      + [f'concat=n={idx}:v=1[basev]', fade_out_filter]
   ) if has_audio else ''
+
+  disclaimer_filter = ''
+  if legal_overlays:
+    current_label = '[basev]'
+    for i, (start, end, text) in enumerate(legal_overlays):
+      next_label = '[outv]' if i == len(legal_overlays) - 1 else f'[ld{i}]'
+      escaped = text.replace("'", "\\'")
+      disclaimer_filter += (
+          f"{current_label}drawtext=text='{escaped}':fontcolor=white:fontsize=20:"
+          "box=1:boxcolor=black@0.5:x=(w-text_w)/2:y=h-(text_h+20):"
+          f"enable='between(t,{start},{end})'{next_label};"
+      )
+      current_label = next_label
+  else:
+    disclaimer_filter = '[basev]copy[outv]'
+  disclaimer_filter = disclaimer_filter.rstrip(';')
+
+  full_av_select_filter = ';'.join([full_av_select_filter, disclaimer_filter])
+  if music_overlay_select_filter:
+    music_overlay_select_filter = ';'.join([
+        music_overlay_select_filter, disclaimer_filter
+    ])
+  if continuous_audio_select_filter:
+    continuous_audio_select_filter = ';'.join([
+        continuous_audio_select_filter, disclaimer_filter
+    ])
 
   return (
       full_av_select_filter,
