@@ -338,7 +338,17 @@ limitations under the License.
             [cdkDragFreeDragPosition]="dragPosition"
             style="visibility: hidden"
           ></div>
+          <div class="legal-overlay" *ngIf="legalOverlayText">{{ legalOverlayText }}</div>
         </div>
+      </div>
+      <div class="row legal-input-row">
+        <mat-form-field subscriptSizing="dynamic" style="width: 200px">
+          <mat-label>Enter Legal Text</mat-label>
+          <input matInput [(ngModel)]="legalTextInput" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="applyLegalText()">
+          Apply
+        </button>
       </div>
       <div class="row">
         <div

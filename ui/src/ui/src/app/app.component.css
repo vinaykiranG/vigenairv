@@ -77,6 +77,25 @@ segments-list {
   pointer-events: none;
 }
 
+.legal-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 2px 4px;
+  pointer-events: none;
+  z-index: 2;
+  white-space: pre-wrap;
+}
+
+.legal-input-row {
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .canvas-drag-element {
   cursor: move;
   overflow: hidden;

@@ -192,6 +192,8 @@ export class AppComponent {
   businessObjectives = Object.values(CONFIG.vertexAi.abcdBusinessObjectives);
   segmentMarkers: Record<string, SegmentMarker[]> = {};
   segmentSplitting = false;
+  legalTextInput = '';
+  legalOverlayText = '';
 
   @ViewChild('VideoComboComponent') VideoComboComponent?: VideoComboComponent;
   @ViewChild('previewVideoElem')
@@ -1340,6 +1342,10 @@ export class AppComponent {
   toggleContentDisplay() {
     this.evalPromptTextarea!.nativeElement.style.display = 'block';
     this.evalPromptPlaceholder!.nativeElement.style.display = 'none';
+  }
+
+  applyLegalText() {
+    this.legalOverlayText = this.legalTextInput;
   }
 
   updateVideoPreview() {
