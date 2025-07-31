@@ -116,6 +116,44 @@ video {
   gap: 8px;
 }
 
+.legal-overlay-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.legal-text-input {
+  flex: 1;
+  min-width: 300px;
+}
+
+.apply-legal-button {
+  height: 56px;
+  min-width: 100px;
+}
+
+.legal-overlay {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  text-align: center;
+  max-width: 90%;
+  word-wrap: break-word;
+  z-index: 10;
+  pointer-events: none;
+}
+
 .filmstrip-img {
   display: flex;
   width: var(--filmstrip-image-width);
