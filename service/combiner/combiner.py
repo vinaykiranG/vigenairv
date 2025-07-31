@@ -866,7 +866,7 @@ def _get_variant_ffmpeg_commands(
       out_label = 'outv' if i == len(legal_disclaimers) - 1 else f'ld{i}'
       escaped = text.replace("'", "\\'").replace(':', '\\:')
       disclaimer_filter += (
-          f";[{last_label}]drawtext=text='{escaped}':x=(w-text_w)/2:y=h-line_h-10"
+          f";[{last_label}]drawtext=text='{escaped}':x=(w-text_w)/2:y=h-line_h-8"
           f":fontcolor=white:fontsize=24:box=1:boxcolor=black@0.5:enable='between(t,{start},{end})'[{out_label}]"
       )
       last_label = out_label
