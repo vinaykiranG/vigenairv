@@ -1409,24 +1409,24 @@ export class AppComponent {
     const settings = {
       brandName: this.brandName,
       logo: this.logoPreview,
-      primaryColor: this.primaryColor
+      primaryColor: this.primaryColor,
     };
-    
+
     localStorage.setItem('uiPersonalizationSettings', JSON.stringify(settings));
-    
+
     // Apply settings immediately
     this.currentBrandName = this.brandName;
     this.currentLogo = this.logoPreview;
     this.currentPrimaryColor = this.primaryColor;
-    
-    // Apply dynamic theming
+
+    // Apply dynamic theming for all buttons
     this.applyDynamicTheme();
-    
+
     this.snackBar.open('Settings saved successfully!', 'Close', {
       duration: 3000,
-      horizontalPosition: 'center'
+      horizontalPosition: 'center',
     });
-    
+
     this.settingsSidenav.close();
   }
 
@@ -1499,12 +1499,21 @@ export class AppComponent {
           background-color: ${color} !important;
         }
         
-        .mat-raised-button.mat-primary {
+        .mat-button.mat-primary,
+        .mat-icon-button.mat-primary,
+        .mat-stroked-button.mat-primary {
+          color: ${color} !important;
+        }
+
+        .mat-flat-button.mat-primary,
+        .mat-raised-button.mat-primary,
+        .mat-fab.mat-primary,
+        .mat-mini-fab.mat-primary {
           background-color: ${color} !important;
         }
-        
-        .mat-icon-button.mat-primary {
-          color: ${color} !important;
+
+        .mat-stroked-button.mat-primary {
+          border-color: ${color} !important;
         }
         
         .mat-form-field.mat-focused .mat-form-field-label {
@@ -1517,6 +1526,11 @@ export class AppComponent {
         
         .mat-checkbox-checked .mat-checkbox-background {
           background-color: ${color} !important;
+        }
+
+        .mat-button-toggle-checked {
+          background-color: ${color} !important;
+          color: #fff !important;
         }
       `;
     }
