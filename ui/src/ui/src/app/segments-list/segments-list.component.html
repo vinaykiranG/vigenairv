@@ -188,6 +188,30 @@ limitations under the License.
                   <mat-icon>delete_forever</mat-icon>Clear markers
                 </button>
               </div>
+              <div class="legal-overlay-controls">
+                <mat-form-field appearance="outline" class="legal-text-input">
+                  <mat-label>Enter Legal Text</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="legalTextInput[segment.av_segment_id]"
+                    placeholder="e.g., T&Cs apply. Gamble responsibly."
+                    maxlength="200"
+                  />
+                </mat-form-field>
+                <button
+                  type="button"
+                  mat-raised-button
+                  color="primary"
+                  (click)="applyLegalOverlay(segment.av_segment_id)"
+                  [disabled]="
+                    !legalTextInput[segment.av_segment_id] ||
+                    legalTextInput[segment.av_segment_id].trim() === ''
+                  "
+                  class="apply-legal-button"
+                >
+                  <mat-icon>text_fields</mat-icon>Apply
+                </button>
+              </div>
             }
           </div>
         </div>

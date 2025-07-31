@@ -91,11 +91,13 @@ class VideoVariantSegment:
     av_segment_id: The id of the A/V segment.
     start_s: The start time of the A/V segment in seconds.
     end_s: The end time of the A/V segment in seconds.
+    legal_overlay_text: Optional legal text overlay for this segment.
   """
 
   av_segment_id: int
   start_s: float
   end_s: float
+  legal_overlay_text: str = None
 
   def __init__(self, **kwargs):
     field_names = set([f.name for f in dataclasses.fields(self)])
@@ -686,6 +688,7 @@ def _render_video_variant(
       has_audio,
       video_variant.render_settings,
       video_duration,
+      video_variant,
   )
 
   ffmpeg_cmds = _get_variant_ffmpeg_commands(
@@ -1328,6 +1331,7 @@ def _build_ffmpeg_filters(
     has_audio: bool,
     render_settings: VideoVariantRenderSettings,
     video_duration: float,
+    video_variant: VideoVariant,
 ) -> Tuple[str, str, str]:
   """Builds the ffmpeg filters.
 
@@ -1383,32 +1387,81 @@ def _build_ffmpeg_filters(
     case Utils.RenderOverlayType.VARIANT_START.value | _:
       overlay_start = variant_first_segment_start
 
-  full_av_select_filter = ''.join(
-      video_select_filter + audio_select_filter + select_filter_concat
-      + [f'concat=n={idx}:v=1:a=1[outv][outa]', fade_out_filter]
-  ) if has_audio else ''.join(
-      video_select_filter + select_filter_concat
-      + [f'concat=n={idx}:v=1[outv]']
-  )
+  # Build text overlay filters for segments with legal text
+  text_overlay_filters = []
+  text_overlays_needed = False
+  
+  for segment_id, segment in video_variant.av_segments.items():
+    if segment.legal_overlay_text:
+      text_overlays_needed = True
+      # Escape special characters in the text for FFmpeg
+      escaped_text = segment.legal_overlay_text.replace("'", "\\'").replace(":", "\\:")
+      text_overlay_filters.append(
+          f"drawtext=text='{escaped_text}':fontsize=14:fontcolor=white"
+          f":box=1:boxcolor=black@0.5:boxborderw=5"
+          f":x=(w-text_w)/2:y=h-th-10"
+          f":enable='between(t,{segment.start_s},{segment.end_s})'"
+      )
+  
+  # Combine all text overlays into a single filter
+  text_overlay_filter = ','.join(text_overlay_filters) if text_overlay_filters else ''
+  
+  if text_overlays_needed:
+    full_av_select_filter = ''.join(
+        video_select_filter + audio_select_filter + select_filter_concat
+        + [f'concat=n={idx}:v=1:a=1[temp_outv][outa];[temp_outv]{text_overlay_filter}[outv]', fade_out_filter]
+    ) if has_audio else ''.join(
+        video_select_filter + select_filter_concat
+        + [f'concat=n={idx}:v=1[temp_outv];[temp_outv]{text_overlay_filter}[outv]']
+    )
+  else:
+    full_av_select_filter = ''.join(
+        video_select_filter + audio_select_filter + select_filter_concat
+        + [f'concat=n={idx}:v=1:a=1[outv][outa]', fade_out_filter]
+    ) if has_audio else ''.join(
+        video_select_filter + select_filter_concat
+        + [f'concat=n={idx}:v=1[outv]']
+    )
 
-  music_overlay_select_filter = ''.join(
-      video_select_filter
-      + [entry.replace('0:a', '1:a') for entry in audio_select_filter] + [
-          f"[2:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
-          ',asetpts=N/SR/TB[music];'
-      ] + select_filter_concat + [
-          f'concat=n={idx}:v=1:a=1[outv][tempa];',
-          '[tempa][music]amerge=inputs=2[outa]',
-          fade_out_filter,
-      ]
-  ) if has_audio else ''
-  continuous_audio_select_filter = ''.join(
-      video_select_filter + [
-          f"[0:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
-          ',asetpts=N/SR/TB[outa];'
-      ] + [entry for entry in select_filter_concat if entry.startswith('[v')]
-      + [f'concat=n={idx}:v=1[outv]', fade_out_filter]
-  ) if has_audio else ''
+  if text_overlays_needed:
+    music_overlay_select_filter = ''.join(
+        video_select_filter
+        + [entry.replace('0:a', '1:a') for entry in audio_select_filter] + [
+            f"[2:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
+            ',asetpts=N/SR/TB[music];'
+        ] + select_filter_concat + [
+            f'concat=n={idx}:v=1:a=1[temp_outv][tempa];',
+            f'[temp_outv]{text_overlay_filter}[outv];',
+            '[tempa][music]amerge=inputs=2[outa]',
+            fade_out_filter,
+        ]
+    ) if has_audio else ''
+    continuous_audio_select_filter = ''.join(
+        video_select_filter + [
+            f"[0:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
+            ',asetpts=N/SR/TB[outa];'
+        ] + [entry for entry in select_filter_concat if entry.startswith('[v')]
+        + [f'concat=n={idx}:v=1[temp_outv];[temp_outv]{text_overlay_filter}[outv]', fade_out_filter]
+    ) if has_audio else ''
+  else:
+    music_overlay_select_filter = ''.join(
+        video_select_filter
+        + [entry.replace('0:a', '1:a') for entry in audio_select_filter] + [
+            f"[2:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
+            ',asetpts=N/SR/TB[music];'
+        ] + select_filter_concat + [
+            f'concat=n={idx}:v=1:a=1[outv][tempa];',
+            '[tempa][music]amerge=inputs=2[outa]',
+            fade_out_filter,
+        ]
+    ) if has_audio else ''
+    continuous_audio_select_filter = ''.join(
+        video_select_filter + [
+            f"[0:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
+            ',asetpts=N/SR/TB[outa];'
+        ] + [entry for entry in select_filter_concat if entry.startswith('[v')]
+        + [f'concat=n={idx}:v=1[outv]', fade_out_filter]
+    ) if has_audio else ''
 
   return (
       full_av_select_filter,

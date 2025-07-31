@@ -31,10 +31,13 @@ import {
   QueryList,
   ViewChildren,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -49,10 +52,13 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatChipsModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
     CdkDropList,
@@ -71,6 +77,7 @@ export class SegmentsListComponent {
 
   @Output() seekToSegmentEvent = new EventEmitter<string>();
   @Output() segmentSplitEvent = new EventEmitter<SegmentMarker[]>();
+  @Output() legalOverlayChangeEvent = new EventEmitter<{segmentId: string, legalText: string}>();
 
   @ViewChildren('segmentVideoElem')
   segmentVideoElems?: QueryList<ElementRef<HTMLVideoElement>>;
@@ -79,6 +86,8 @@ export class SegmentsListComponent {
 
   segmentMarkerPositions: Record<string, number[]> = {};
   splitting = false;
+  legalTextInput: Record<string, string> = {};
+  legalOverlays: Record<string, string> = {};
 
   CONFIG = CONFIG;
 
@@ -108,6 +117,8 @@ export class SegmentsListComponent {
       } else {
         setTimeout(() => {
           this.restoreMarkers();
+          this.initializeLegalOverlaysFromSegments();
+          this.restoreLegalOverlays();
         }, 10);
       }
     }
@@ -124,6 +135,20 @@ export class SegmentsListComponent {
           this.drawMarker(segmentId, marker);
         });
       }
+    });
+  }
+
+  initializeLegalOverlaysFromSegments() {
+    this.segmentList?.forEach((segment: any) => {
+      if (segment.legal_overlay_text) {
+        this.legalOverlays[segment.av_segment_id] = segment.legal_overlay_text;
+      }
+    });
+  }
+
+  restoreLegalOverlays() {
+    Object.entries(this.legalOverlays).forEach(([segmentId, legalText]) => {
+      this.addLegalOverlayToVideo(segmentId, legalText);
     });
   }
 
@@ -229,5 +254,58 @@ export class SegmentsListComponent {
       (segment: AvSegment) => segment.av_segment_id === segmentId
     ).splitting = true;
     this.clearSegmentMarkers(segmentId);
+  }
+
+  applyLegalOverlay(segmentId: string) {
+    const legalText = this.legalTextInput[segmentId]?.trim();
+    if (!legalText) return;
+
+    // Store the legal overlay text for this segment
+    this.legalOverlays[segmentId] = legalText;
+
+    // Add the overlay to the video element
+    this.addLegalOverlayToVideo(segmentId, legalText);
+
+    // Emit the change event so parent component can update the segment data
+    this.legalOverlayChangeEvent.emit({segmentId, legalText});
+
+    // Clear the input field after applying
+    this.legalTextInput[segmentId] = '';
+  }
+
+  addLegalOverlayToVideo(segmentId: string, legalText: string) {
+    const videoElement = this.getSegmentVideo(segmentId);
+    if (!videoElement) return;
+
+    // Remove any existing legal overlay for this segment
+    this.removeLegalOverlayFromVideo(segmentId);
+
+    // Create the overlay element
+    const overlay = document.createElement('div');
+    overlay.className = 'legal-overlay';
+    overlay.textContent = legalText;
+    overlay.id = `legal-overlay-${segmentId}`;
+
+    // Add the overlay to the video container
+    const videoContainer = videoElement.parentElement;
+    if (videoContainer) {
+      videoContainer.style.position = 'relative';
+      videoContainer.appendChild(overlay);
+    }
+  }
+
+  removeLegalOverlayFromVideo(segmentId: string) {
+    const existingOverlay = document.getElementById(`legal-overlay-${segmentId}`);
+    if (existingOverlay) {
+      existingOverlay.remove();
+    }
+  }
+
+  hasLegalOverlay(segmentId: string): boolean {
+    return !!this.legalOverlays[segmentId];
+  }
+
+  getLegalOverlayText(segmentId: string): string {
+    return this.legalOverlays[segmentId] || '';
   }
 }

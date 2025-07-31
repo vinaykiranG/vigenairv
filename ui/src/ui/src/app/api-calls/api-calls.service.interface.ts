@@ -45,6 +45,7 @@ export interface AvSegment {
   splitting?: boolean;
   played?: boolean;
   segment_screenshot_uri?: string;
+  legal_overlay_text?: string;
 }
 
 export interface GenerateVariantsResponse {

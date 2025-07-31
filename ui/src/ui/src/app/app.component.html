@@ -308,6 +308,7 @@ limitations under the License.
           [segmentMarkers]="segmentMarkers"
           (seekToSegmentEvent)="seekToSegment($event)"
           (segmentSplitEvent)="splitSegment($event)"
+          (legalOverlayChangeEvent)="updateLegalOverlay($event)"
         ></segments-list>
         <div
           [hidden]="segmentModeToggle.value !== 'preview'"

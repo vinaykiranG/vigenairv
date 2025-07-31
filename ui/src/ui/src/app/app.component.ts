@@ -1097,6 +1097,7 @@ export class AppComponent {
         start_s: segment.start_s,
         end_s: segment.end_s,
         segment_screenshot_uri: segment.segment_screenshot_uri,
+        legal_overlay_text: segment.legal_overlay_text,
       };
     });
     const renderSettings: RenderSettings = {
@@ -1363,5 +1364,13 @@ export class AppComponent {
       },
       error: err => this.failHandler(err),
     });
+  }
+
+  updateLegalOverlay(event: {segmentId: string, legalText: string}) {
+    const segment = this.avSegments?.find((seg: AvSegment) => seg.av_segment_id === event.segmentId);
+    if (segment) {
+      segment.legal_overlay_text = event.legalText;
+      console.log(`Legal overlay updated for segment ${event.segmentId}:`, event.legalText);
+    }
   }
 }
