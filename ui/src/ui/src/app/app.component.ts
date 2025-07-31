@@ -155,6 +155,8 @@ export class AppComponent {
   overlaySettings: OverlayType = 'variant_start';
   fadeOut = false;
   demandGenAssets = true;
+  enableTextOverlay = false;
+  overlayText = 'T&Cs apply. Gamble responsibly.';
   analyseAudio = true;
   previousRuns: string[] | undefined;
   previousRenders: PreviousRender[] | undefined;
@@ -615,6 +617,8 @@ export class AppComponent {
     this.fadeOut = false;
     this.allSegmentsToggle = false;
     this.demandGenAssets = true;
+    this.enableTextOverlay = false;
+    this.overlayText = 'T&Cs apply. Gamble responsibly.';
     this.analyseAudio = true;
     this.segmentMarkers = {};
     this.previewVideoElem.nativeElement.pause();
@@ -1107,6 +1111,8 @@ export class AppComponent {
       use_continuous_audio: this.audioSettings === 'continuous',
       fade_out: this.fadeOut,
       overlay_type: this.overlaySettings,
+      enable_text_overlay: this.enableTextOverlay,
+      overlay_text: this.overlayText,
     };
     const selectedScenes = selectedSegments.map(
       (segment: AvSegment) => segment.av_segment_id
@@ -1178,6 +1184,8 @@ export class AppComponent {
         : 'segment';
     this.fadeOut = variant.render_settings.fade_out;
     this.overlaySettings = variant.render_settings.overlay_type!;
+    this.enableTextOverlay = variant.render_settings.enable_text_overlay || false;
+    this.overlayText = variant.render_settings.overlay_text || 'T&Cs apply. Gamble responsibly.';
     this.closeRenderQueueSidenav();
     setTimeout(() => {
       this.loadingVariant = false;

@@ -65,14 +65,21 @@ limitations under the License.
       >
     </div>
   }
-  <video
-    class="mat-elevation-z8"
-    [style.margin-right]="showApprovalStatus ? 'auto' : ''"
-    #videoElem
-    controls
-  >
-    <source src="" />
-  </video>
+  <div class="video-container" [style.margin-right]="showApprovalStatus ? 'auto' : ''">
+    <video
+      class="mat-elevation-z8"
+      #videoElem
+      controls
+    >
+      <source src="" />
+    </video>
+    <div 
+      *ngIf="combo.render_settings && combo.render_settings.enable_text_overlay"
+      class="text-overlay"
+    >
+      {{ combo.render_settings.overlay_text }}
+    </div>
+  </div>
 </div>
 <div class="row" style="justify-content: start">
   Segments: {{ combo.scenes }}
@@ -97,6 +104,13 @@ limitations under the License.
         : 'Individual segments') +
       (combo.render_settings.fade_out ? ' + Fade out' : '')
   }}
+</div>
+<div
+  class="row"
+  style="justify-content: start; margin-top: 0"
+  *ngIf="combo.render_settings && combo.render_settings.enable_text_overlay"
+>
+  Text overlay: "{{ combo.render_settings.overlay_text }}"
 </div>
 <div class="row" style="justify-content: start">
   {{ combo.description }}
