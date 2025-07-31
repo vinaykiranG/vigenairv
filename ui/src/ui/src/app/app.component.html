@@ -18,10 +18,11 @@ limitations under the License.
   <span style="margin-right: auto">
     <span style="font-size: 1.5em; display: flex; align-items: center">
       <img
-        src="https://services.google.com/fh/files/misc/vigenair_logo.png"
+        [src]="currentLogo || 'https://services.google.com/fh/files/misc/vigenair_logo.png'"
         width="40px"
+        style="height: 40px; object-fit: contain;"
       />
-      <span style="margin-left: 12px">ViGenAiR</span>
+      <span style="margin-left: 12px">{{ currentBrandName || 'ViGenAiR' }}</span>
     </span></span
   >
   <span class="header-text">
@@ -32,6 +33,15 @@ limitations under the License.
     ></span
   >
   <span style="margin-left: auto"></span>
+  <span>
+    <button
+      mat-icon-button
+      matTooltip="App Settings"
+      (click)="toggleSettingsSidenav()"
+    >
+      <mat-icon>settings</mat-icon>
+    </button>
+  </span>
   <span #renderQueueButtonSpan>
     <button
       mat-icon-button
@@ -842,6 +852,69 @@ limitations under the License.
         >Uploading a new video or selecting an existing one will clear the
         render queue.
       </span>
+    </div>
+  </mat-sidenav>
+  
+  <!-- Settings Sidenav for UI Personalization -->
+  <mat-sidenav #settingsSidenav position="start" style="width: 35rem;">
+    <div class="settings-container" style="padding: 1rem;">
+      <h3>App Settings</h3>
+      
+      <!-- Checkbox to fill with previous settings -->
+      <div style="margin-bottom: 1rem;">
+        <mat-checkbox [(ngModel)]="fillWithPreviousSettings" (change)="onFillPreviousSettingsChange()">
+          Fill with previous settings
+        </mat-checkbox>
+      </div>
+      
+      <mat-divider style="margin: 1rem 0;"></mat-divider>
+      
+      <!-- 1. Logo Section -->
+      <div class="logo-section" style="text-align: center;">
+        <img
+          [src]="logoPreview || './assets/dummy.svg'"
+          alt="Logo"
+          style="max-height: 80px; margin-bottom: 1rem;"
+        /> <br>
+        <input type="file" #logoInput hidden (change)="onLogoSelected($event)" accept="image/*" />
+        <button mat-raised-button color="primary" (click)="logoInput.click()">Upload Logo</button>
+      </div>
+
+      <mat-divider style="margin: 1rem 0;"></mat-divider>
+
+      <!-- 2. Brand Name Input -->
+      <mat-form-field appearance="fill" style="width: 90%;">
+        <mat-label>Brand Name</mat-label>
+        <input matInput [(ngModel)]="brandName" />
+      </mat-form-field>
+
+      <mat-divider style="margin: 1rem 0;"></mat-divider>
+
+      <!-- 3. Color Pickers -->
+      <div class="colorPickerSec">
+        <label for="colorPicker" style="font-weight: 500; display: block; margin-bottom: 8px;">
+          Choose Theme Color
+        </label>
+        <input
+          id="colorPicker"
+          type="color"
+          [(ngModel)]="primaryColor"
+          style="width: 120px; height: 40px; border: none; border-radius: 3em; background: none; cursor: pointer;"
+        />
+      </div>
+
+      <mat-divider style="margin: 1rem 0;"></mat-divider>
+      
+      <div style="display: flex; justify-content: center; align-items: center; gap: 1em;">
+        <!-- Save Button -->
+        <button mat-raised-button color="primary" (click)="saveSettings()">
+          Save
+        </button>
+        <!-- Reset Button -->
+        <button mat-raised-button color="primary" (click)="resetSettings()">
+          Reset
+        </button>
+      </div>
     </div>
   </mat-sidenav>
 </mat-sidenav-container>

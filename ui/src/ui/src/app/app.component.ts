@@ -168,6 +168,15 @@ export class AppComponent {
   renderQueue: RenderQueueVariant[] = [];
   renderQueueJsonArray: string[] = [];
   renderQueueName = '';
+
+  // UI Personalization properties
+  brandName = '';
+  logoPreview = '';
+  primaryColor = '#3f51b5';
+  currentBrandName = '';
+  currentLogo = '';
+  currentPrimaryColor = '#3f51b5';
+  fillWithPreviousSettings = false;
   displayObjectTracking = true;
   moveCropArea = false;
   weightsTextIndex = 3;
@@ -205,6 +214,7 @@ export class AppComponent {
   @ViewChild('segmentModeToggle') segmentModeToggle!: MatButtonToggleGroup;
   @ViewChild('videosFilterToggle') videosFilterToggle!: MatSlideToggle;
   @ViewChild('renderQueueSidenav') renderQueueSidenav!: MatSidenav;
+  @ViewChild('settingsSidenav') settingsSidenav!: MatSidenav;
   @ViewChild('renderQueueButtonSpan')
   renderQueueButtonSpan!: ElementRef<HTMLSpanElement>;
   @ViewChild('reorderSegmentsToggle') reorderSegmentsToggle?: MatSlideToggle;
@@ -225,6 +235,7 @@ export class AppComponent {
   ) {
     this.getPreviousRuns();
     this.getWebAppUrl();
+    this.loadPersonalizationSettings();
 
     // Allow locally served app to process query params.
     // Production env (Apps Script) is handled via ngAfterViewInit()
@@ -1363,5 +1374,151 @@ export class AppComponent {
       },
       error: err => this.failHandler(err),
     });
+  }
+
+  // UI Personalization Methods
+  toggleSettingsSidenav() {
+    this.settingsSidenav.toggle();
+  }
+
+  onLogoSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.logoPreview = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onFillPreviousSettingsChange() {
+    if (this.fillWithPreviousSettings) {
+      this.loadPersonalizationSettings();
+      this.brandName = this.currentBrandName;
+      this.logoPreview = this.currentLogo;
+      this.primaryColor = this.currentPrimaryColor;
+    } else {
+      this.brandName = '';
+      this.logoPreview = '';
+      this.primaryColor = '#3f51b5';
+    }
+  }
+
+  saveSettings() {
+    const settings = {
+      brandName: this.brandName,
+      logo: this.logoPreview,
+      primaryColor: this.primaryColor
+    };
+    
+    localStorage.setItem('uiPersonalizationSettings', JSON.stringify(settings));
+    
+    // Apply settings immediately
+    this.currentBrandName = this.brandName;
+    this.currentLogo = this.logoPreview;
+    this.currentPrimaryColor = this.primaryColor;
+    
+    // Apply dynamic theming
+    this.applyDynamicTheme();
+    
+    this.snackBar.open('Settings saved successfully!', 'Close', {
+      duration: 3000,
+      horizontalPosition: 'center'
+    });
+    
+    this.settingsSidenav.close();
+  }
+
+  resetSettings() {
+    localStorage.removeItem('uiPersonalizationSettings');
+    
+    // Reset to defaults
+    this.brandName = '';
+    this.logoPreview = '';
+    this.primaryColor = '#3f51b5';
+    this.currentBrandName = '';
+    this.currentLogo = '';
+    this.currentPrimaryColor = '#3f51b5';
+    this.fillWithPreviousSettings = false;
+    
+    // Reset theme
+    this.applyDynamicTheme();
+    
+    this.snackBar.open('Settings reset to default!', 'Close', {
+      duration: 3000,
+      horizontalPosition: 'center'
+    });
+    
+    this.settingsSidenav.close();
+  }
+
+  loadPersonalizationSettings() {
+    const savedSettings = localStorage.getItem('uiPersonalizationSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      this.currentBrandName = settings.brandName || '';
+      this.currentLogo = settings.logo || '';
+      this.currentPrimaryColor = settings.primaryColor || '#3f51b5';
+      
+      // Apply the theme
+      this.applyDynamicTheme();
+    }
+  }
+
+  applyDynamicTheme() {
+    // Create a style element to override CSS custom properties
+    let styleElement = document.getElementById('dynamic-theme-styles') as HTMLStyleElement;
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = 'dynamic-theme-styles';
+      document.head.appendChild(styleElement);
+    }
+    
+    const color = this.currentPrimaryColor || '#3f51b5';
+    
+    // Convert hex to RGB for material design color variations
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
+    
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      styleElement.innerHTML = `
+        :root {
+          --primary-color: ${color};
+          --primary-color-rgb: ${rgb.r}, ${rgb.g}, ${rgb.b};
+        }
+        
+        .mat-toolbar.mat-primary {
+          background-color: ${color} !important;
+        }
+        
+        .mat-raised-button.mat-primary {
+          background-color: ${color} !important;
+        }
+        
+        .mat-icon-button.mat-primary {
+          color: ${color} !important;
+        }
+        
+        .mat-form-field.mat-focused .mat-form-field-label {
+          color: ${color} !important;
+        }
+        
+        .mat-form-field.mat-focused .mat-form-field-ripple {
+          background-color: ${color} !important;
+        }
+        
+        .mat-checkbox-checked .mat-checkbox-background {
+          background-color: ${color} !important;
+        }
+      `;
+    }
   }
 }
