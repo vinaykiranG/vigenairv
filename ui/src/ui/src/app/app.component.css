@@ -14,6 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+/* CSS Custom Properties for Dynamic Theming */
+:host {
+  --primary-color: #1976D2;
+  --primary-color-rgb: 25, 118, 210;
+}
+
+/* Settings container styling */
+.settings-container {
+  background: #fafafa;
+  border-radius: 8px;
+  margin: 16px;
+}
+
+.settings-container h3 {
+  color: var(--primary-color);
+  margin-bottom: 24px;
+  text-align: center;
+  font-weight: 500;
+}
+
 .row {
   display: flex;
   flex-direction: row;

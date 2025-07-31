@@ -56,6 +56,7 @@ import { marked } from 'marked';
 import { CONFIG } from '../../../config';
 import { StringUtil } from '../../../string-util';
 import { TimeUtil } from '../../../time-util';
+import { HttpClientModule } from '@angular/common/http';
 import { ApiCallsService } from './api-calls/api-calls.service';
 import {
   AbcdType,
@@ -70,6 +71,7 @@ import {
   SegmentMarker,
   VariantTextAsset,
 } from './api-calls/api-calls.service.interface';
+import { PersonalizationService, AppSettings } from './personalization/personalization.service';
 import { FileChooserComponent } from './file-chooser/file-chooser.component';
 import { SmartFramingDialog } from './framing-dialog/framing-dialog.component';
 import { SegmentsListComponent } from './segments-list/segments-list.component';
@@ -115,6 +117,7 @@ export type FramingDialogData = {
     MatDialogModule,
     MatProgressSpinnerModule,
     CdkDrag,
+    HttpClientModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -193,6 +196,20 @@ export class AppComponent {
   segmentMarkers: Record<string, SegmentMarker[]> = {};
   segmentSplitting = false;
 
+  // Personalization properties
+  currentSettings: AppSettings = {
+    brandName: 'ViGenAiR',
+    primaryColor: '#1976D2',
+    logoUrl: 'https://services.google.com/fh/files/misc/vigenair_logo.png'
+  };
+  brandName = '';
+  primaryColor = '';
+  logoFile?: File | null;
+  logoPreview?: string | ArrayBuffer | null;
+  savingSettings = false;
+  settingsMessage = '';
+  settingsMessageType: 'success' | 'error' = 'success';
+
   @ViewChild('VideoComboComponent') VideoComboComponent?: VideoComboComponent;
   @ViewChild('previewVideoElem')
   previewVideoElem!: ElementRef<HTMLVideoElement>;
@@ -217,14 +234,17 @@ export class AppComponent {
   @ViewChild('evalPromptPlaceholder')
   evalPromptPlaceholder?: ElementRef<HTMLDivElement>;
   @ViewChild(FileChooserComponent) fileChooserComponent!: FileChooserComponent;
+  @ViewChild('settingsSidenav') settingsSidenav!: MatSidenav;
 
   constructor(
     private apiCallsService: ApiCallsService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private personalizationService: PersonalizationService
   ) {
     this.getPreviousRuns();
     this.getWebAppUrl();
+    this.initializePersonalization();
 
     // Allow locally served app to process query params.
     // Production env (Apps Script) is handled via ngAfterViewInit()
@@ -1363,5 +1383,101 @@ export class AppComponent {
       },
       error: err => this.failHandler(err),
     });
+  }
+
+  // Personalization methods
+  initializePersonalization() {
+    // Subscribe to settings changes
+    this.personalizationService.settings$.subscribe(settings => {
+      this.currentSettings = settings;
+      this.brandName = settings.brandName;
+      this.primaryColor = settings.primaryColor;
+    });
+
+    // Listen for settings updates from the service
+    window.addEventListener('settingsUpdated', (event: any) => {
+      const settings = event.detail as AppSettings;
+      this.currentSettings = settings;
+    });
+  }
+
+  toggleSettingsSidenav() {
+    this.settingsSidenav.toggle();
+  }
+
+  onLogoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    this.logoFile = input.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.logoPreview = reader.result; // sets preview as base64 string
+    };
+    reader.readAsDataURL(this.logoFile);
+    console.log('LogoFile', this.logoFile?.name);
+  }
+
+  onColorChange(newColor: string) {
+    // Apply real-time color preview without saving
+    this.personalizationService.applyMaterialTheme(newColor);
+  }
+
+  saveSettings(): void {
+    if (!this.brandName || !this.primaryColor) {
+      this.showSettingsMessage('Brand name and primary color are required', 'error');
+      return;
+    }
+
+    this.savingSettings = true;
+    this.settingsMessage = '';
+
+    // Call the service to save settings, including the logo file
+    this.personalizationService.saveSettings(this.brandName, this.primaryColor, this.logoFile).subscribe({
+      next: (settings) => {
+        console.log('Settings saved successfully', settings);
+        this.savingSettings = false;
+        this.logoPreview = null; // Clear preview since it's now saved
+        this.logoFile = null;
+        this.showSettingsMessage('Settings saved successfully!', 'success');
+        setTimeout(() => this.settingsSidenav.close(), 1500);
+      },
+      error: (err) => {
+        console.error('Failed to save settings', err);
+        this.savingSettings = false;
+        this.showSettingsMessage('Failed to save settings. Please try again.', 'error');
+      }
+    });
+  }
+
+  resetSettings(): void {
+    this.savingSettings = true;
+    this.settingsMessage = '';
+
+    this.personalizationService.resetSettings().subscribe({
+      next: (settings) => {
+        console.log('Settings reset successfully', settings);
+        this.savingSettings = false;
+        this.logoPreview = null;
+        this.logoFile = null;
+        this.showSettingsMessage('Settings reset to defaults!', 'success');
+        setTimeout(() => this.settingsSidenav.close(), 1500);
+      },
+      error: (err) => {
+        console.error('Failed to reset settings', err);
+        this.savingSettings = false;
+        this.showSettingsMessage('Failed to reset settings. Please try again.', 'error');
+      }
+    });
+  }
+
+  private showSettingsMessage(message: string, type: 'success' | 'error') {
+    this.settingsMessage = message;
+    this.settingsMessageType = type;
+    setTimeout(() => {
+      this.settingsMessage = '';
+    }, 5000);
   }
 }
