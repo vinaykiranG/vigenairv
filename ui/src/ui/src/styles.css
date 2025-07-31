@@ -24,3 +24,14 @@ body {
   margin: 0;
   font-family: 'Google Sans', Roboto, 'Helvetica Neue', sans-serif;
 }
+
+/* Add a CSS variable for the primary theme color */
+:root {
+  --primary-theme-color: #3f51b5; /* Default color */
+}
+
+/* Style primary buttons to use the CSS variable */
+button.mat-raised-button.mat-primary,
+.mat-mdc-raised-button.mat-primary {
+  background-color: var(--primary-theme-color) !important;
+}
