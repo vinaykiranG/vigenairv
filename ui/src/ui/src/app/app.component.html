@@ -18,10 +18,11 @@ limitations under the License.
   <span style="margin-right: auto">
     <span style="font-size: 1.5em; display: flex; align-items: center">
       <img
-        src="https://services.google.com/fh/files/misc/vigenair_logo.png"
+        [src]="currentSettings.logoUrl || 'https://services.google.com/fh/files/misc/vigenair_logo.png'"
         width="40px"
+        [alt]="currentSettings.brandName + ' Logo'"
       />
-      <span style="margin-left: 12px">ViGenAiR</span>
+      <span style="margin-left: 12px">{{ currentSettings.brandName }}</span>
     </span></span
   >
   <span class="header-text">
@@ -32,6 +33,15 @@ limitations under the License.
     ></span
   >
   <span style="margin-left: auto"></span>
+  <span>
+    <button
+      mat-icon-button
+      matTooltip="App Settings"
+      (click)="toggleSettingsSidenav()"
+    >
+      <mat-icon>settings</mat-icon>
+    </button>
+  </span>
   <span #renderQueueButtonSpan>
     <button
       mat-icon-button
@@ -55,6 +65,75 @@ limitations under the License.
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
 </div>
 <mat-sidenav-container style="height: calc(100% - 68px)">
+  <!-- Settings Sidenav for UI Personalization -->
+  <mat-sidenav #settingsSidenav position="start" style="width: 35rem;">
+    <div class="settings-container" style="padding: 24px;">
+      <h3>App Settings</h3>
+      
+      <!-- 1. Logo Section -->
+      <div class="logo-section" style="text-align: center; margin-bottom: 24px;">
+        <img
+          [src]="logoPreview || currentSettings.logoUrl || './assets/dummy.png'"
+          alt="Logo"
+          style="max-height: 80px; margin-bottom: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+        />
+        <br>
+        <input type="file" #logoInput hidden (change)="onLogoSelected($event)" accept="image/*" />
+        <button mat-raised-button color="primary" (click)="logoInput.click()">
+          <mat-icon>upload</mat-icon>
+          Upload Logo
+        </button>
+      </div>
+
+      <mat-divider style="margin: 24px 0;"></mat-divider>
+
+      <!-- 2. Brand Name Input -->
+      <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+        <mat-label>Brand Name</mat-label>
+        <input matInput [(ngModel)]="brandName" placeholder="Enter your brand name" />
+      </mat-form-field>
+
+      <mat-divider style="margin: 24px 0;"></mat-divider>
+
+      <!-- 3. Color Picker -->
+      <div class="colorPickerSec" style="margin-bottom: 24px;">
+        <label for="colorPicker" style="font-weight: 500; display: block; margin-bottom: 12px;">
+          Choose Theme Color
+        </label>
+        <input
+          id="colorPicker"
+          type="color"
+          [(ngModel)]="primaryColor"
+          style="width: 120px; height: 40px; border: none; border-radius: 8px; background: none; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+        />
+        <div style="margin-top: 8px; font-size: 14px; color: #666;">
+          Selected: {{ primaryColor }}
+        </div>
+      </div>
+
+      <mat-divider style="margin: 24px 0;"></mat-divider>
+
+      <!-- 4. Action Buttons -->
+      <div style="display: flex; justify-content: center; align-items: center; gap: 16px;">
+        <button mat-raised-button color="primary" (click)="saveSettings()" [disabled]="savingSettings">
+          <mat-icon>save</mat-icon>
+          {{ savingSettings ? 'Saving...' : 'Save' }}
+        </button>
+        <button mat-raised-button color="warn" (click)="resetSettings()" [disabled]="savingSettings">
+          <mat-icon>refresh</mat-icon>
+          Reset
+        </button>
+      </div>
+
+      <!-- 5. Status Message -->
+      <div *ngIf="settingsMessage" style="margin-top: 16px; text-align: center;">
+        <mat-chip [color]="settingsMessageType === 'success' ? 'primary' : 'warn'">
+          {{ settingsMessage }}
+        </mat-chip>
+      </div>
+    </div>
+  </mat-sidenav>
+
   <mat-sidenav-content>
     <mat-expansion-panel #videoUploadPanel expanded>
       <mat-expansion-panel-header>
