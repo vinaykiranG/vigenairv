@@ -1420,6 +1420,11 @@ export class AppComponent {
     console.log('LogoFile', this.logoFile?.name);
   }
 
+  onColorChange(newColor: string) {
+    // Apply real-time color preview without saving
+    this.personalizationService.applyMaterialTheme(newColor);
+  }
+
   saveSettings(): void {
     if (!this.brandName || !this.primaryColor) {
       this.showSettingsMessage('Brand name and primary color are required', 'error');

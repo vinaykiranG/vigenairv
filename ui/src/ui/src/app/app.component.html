@@ -104,6 +104,7 @@ limitations under the License.
           id="colorPicker"
           type="color"
           [(ngModel)]="primaryColor"
+          (ngModelChange)="onColorChange($event)"
           style="width: 120px; height: 40px; border: none; border-radius: 8px; background: none; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
         />
         <div style="margin-top: 8px; font-size: 14px; color: #666;">
@@ -125,7 +126,20 @@ limitations under the License.
         </button>
       </div>
 
-      <!-- 5. Status Message -->
+      <!-- 5. Theme Preview -->
+      <div style="margin-top: 16px; text-align: center;">
+        <p style="font-size: 14px; color: #666; margin-bottom: 12px;">Theme Preview:</p>
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <button mat-raised-button color="primary">Primary Button</button>
+          <button mat-stroked-button color="primary">Outlined Button</button>
+          <mat-checkbox color="primary" [checked]="true">Checkbox</mat-checkbox>
+          <mat-slide-toggle color="primary" [checked]="true">Toggle</mat-slide-toggle>
+        </div>
+      </div>
+
+      <mat-divider style="margin: 16px 0;"></mat-divider>
+
+      <!-- 6. Status Message -->
       <div *ngIf="settingsMessage" style="margin-top: 16px; text-align: center;">
         <mat-chip [color]="settingsMessageType === 'success' ? 'primary' : 'warn'">
           {{ settingsMessage }}
