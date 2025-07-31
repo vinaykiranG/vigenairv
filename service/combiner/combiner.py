@@ -54,6 +54,8 @@ class VideoVariantRenderSettings:
       audio track portions.
     fade_out: Whether to fade out the end of the video variant.
     overlay_type: How to overlay music / audio for the variant.
+    enable_text_overlay: Whether to enable text overlay on the video.
+    overlay_text: The text to overlay on the video.
   """
 
   generate_image_assets: bool = False
@@ -63,6 +65,8 @@ class VideoVariantRenderSettings:
   use_continuous_audio: bool = False
   fade_out: bool = False
   overlay_type: Utils.RenderOverlayType = None
+  enable_text_overlay: bool = False
+  overlay_text: str = 'T&Cs apply. Gamble responsibly.'
 
   def __init__(self, **kwargs):
     field_names = set([f.name for f in dataclasses.fields(self)])
@@ -79,7 +83,9 @@ class VideoVariantRenderSettings:
         f'use_music_overlay={self.use_music_overlay}, '
         f'use_continuous_audio={self.use_continuous_audio}, '
         f'fade_out={self.fade_out}, '
-        f'overlay_type={self.overlay_type})'
+        f'overlay_type={self.overlay_type}, '
+        f'enable_text_overlay={self.enable_text_overlay}, '
+        f'overlay_text={self.overlay_text})'
     )
 
 
@@ -739,16 +745,26 @@ def _render_video_variant(
       Utils.RenderFormatType.SQUARE.value
       in video_variant.render_settings.formats
   ):
+    blur_filter = ConfigService.FFMPEG_SQUARE_BLUR_FILTER
+    if video_variant.render_settings.enable_text_overlay:
+      blur_filter = _get_text_overlay_filter(
+          video_variant.render_settings.overlay_text, blur_filter
+      )
     formats_to_render[Utils.RenderFormatType.SQUARE.value] = {
-        'blur_filter': ConfigService.FFMPEG_SQUARE_BLUR_FILTER,
+        'blur_filter': blur_filter,
         'crop_file_path': square_video_file_path
     }
   if (
       Utils.RenderFormatType.VERTICAL.value
       in video_variant.render_settings.formats
   ):
+    blur_filter = ConfigService.FFMPEG_VERTICAL_BLUR_FILTER
+    if video_variant.render_settings.enable_text_overlay:
+      blur_filter = _get_text_overlay_filter(
+          video_variant.render_settings.overlay_text, blur_filter
+      )
     formats_to_render[Utils.RenderFormatType.VERTICAL.value] = {
-        'blur_filter': ConfigService.FFMPEG_VERTICAL_BLUR_FILTER,
+        'blur_filter': blur_filter,
         'crop_file_path': vertical_video_file_path
     }
   for format_type, format_instructions in formats_to_render.items():
@@ -809,6 +825,30 @@ def _render_video_variant(
       result['images'][format_type] = rendered_path['images']
 
   return result
+
+
+def _get_text_overlay_filter(overlay_text: str, video_filter: str) -> str:
+  """Generates an FFmpeg filter with text overlay.
+  
+  Args:
+    overlay_text: The text to overlay on the video.
+    video_filter: The existing video filter to extend.
+    
+  Returns:
+    The video filter with text overlay added.
+  """
+  # Escape special characters in the text for FFmpeg
+  escaped_text = overlay_text.replace(':', '\\:').replace("'", "\\'")
+  
+  # Add text overlay to the bottom center of the video
+  text_filter = f"drawtext=text='{escaped_text}':fontsize=24:fontcolor=white:x=(w-text_w)/2:y=h-th-20:box=1:boxcolor=black@0.5:boxborderw=5"
+  
+  if video_filter:
+    # If there's an existing filter, chain the text overlay after it
+    return f"{video_filter},{text_filter}"
+  else:
+    # If no existing filter, just use the text overlay
+    return text_filter
 
 
 def _get_variant_ffmpeg_commands(
@@ -1383,12 +1423,18 @@ def _build_ffmpeg_filters(
     case Utils.RenderOverlayType.VARIANT_START.value | _:
       overlay_start = variant_first_segment_start
 
+  # Add text overlay if enabled
+  text_overlay_filter = ''
+  if render_settings.enable_text_overlay:
+    escaped_text = render_settings.overlay_text.replace(':', '\\:').replace("'", "\\'")
+    text_overlay_filter = f";[outv]drawtext=text='{escaped_text}':fontsize=24:fontcolor=white:x=(w-text_w)/2:y=h-th-20:box=1:boxcolor=black@0.5:boxborderw=5[outv]"
+
   full_av_select_filter = ''.join(
       video_select_filter + audio_select_filter + select_filter_concat
-      + [f'concat=n={idx}:v=1:a=1[outv][outa]', fade_out_filter]
+      + [f'concat=n={idx}:v=1:a=1[outv][outa]', fade_out_filter, text_overlay_filter]
   ) if has_audio else ''.join(
       video_select_filter + select_filter_concat
-      + [f'concat=n={idx}:v=1[outv]']
+      + [f'concat=n={idx}:v=1[outv]', text_overlay_filter]
   )
 
   music_overlay_select_filter = ''.join(
@@ -1400,6 +1446,7 @@ def _build_ffmpeg_filters(
           f'concat=n={idx}:v=1:a=1[outv][tempa];',
           '[tempa][music]amerge=inputs=2[outa]',
           fade_out_filter,
+          text_overlay_filter,
       ]
   ) if has_audio else ''
   continuous_audio_select_filter = ''.join(
@@ -1407,7 +1454,7 @@ def _build_ffmpeg_filters(
           f"[0:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
           ',asetpts=N/SR/TB[outa];'
       ] + [entry for entry in select_filter_concat if entry.startswith('[v')]
-      + [f'concat=n={idx}:v=1[outv]', fade_out_filter]
+      + [f'concat=n={idx}:v=1[outv]', fade_out_filter, text_overlay_filter]
   ) if has_audio else ''
 
   return (

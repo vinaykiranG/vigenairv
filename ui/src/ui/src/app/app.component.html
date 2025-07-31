@@ -328,6 +328,12 @@ limitations under the License.
               default
             />
           </video>
+          <div 
+            *ngIf="enableTextOverlay"
+            class="text-overlay"
+          >
+            {{ overlayText }}
+          </div>
           <canvas #magicCanvas></canvas>
           <div
             #canvasDragElement
@@ -576,6 +582,19 @@ limitations under the License.
                 Fade out
               </mat-checkbox>
             </span>
+          </div>
+          <div class="user-settings" style="margin-top: 8px">
+            <span matTooltip="Add text overlay to the video">
+              <mat-checkbox color="primary" [(ngModel)]="enableTextOverlay">
+                Enable text overlay
+              </mat-checkbox>
+            </span>
+          </div>
+          <div *ngIf="enableTextOverlay" style="margin-top: 8px">
+            <mat-form-field subscriptSizing="dynamic" style="width: 100%">
+              <mat-label>Overlay text:</mat-label>
+              <input matInput [(ngModel)]="overlayText" placeholder="Enter text to overlay">
+            </mat-form-field>
           </div>
           <div class="user-settings">
             <mat-checkbox color="primary" [(ngModel)]="demandGenAssets">
