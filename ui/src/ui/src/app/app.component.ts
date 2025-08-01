@@ -73,6 +73,7 @@ import {
 import { FileChooserComponent } from './file-chooser/file-chooser.component';
 import { SmartFramingDialog } from './framing-dialog/framing-dialog.component';
 import { SegmentsListComponent } from './segments-list/segments-list.component';
+import { SettingsHistoryDialogComponent } from './settings-history-dialog/settings-history-dialog.component';
 import { VideoComboComponent } from './video-combo/video-combo.component';
 
 type ProcessStatus = 'hourglass_top' | 'pending' | 'check_circle';
@@ -115,6 +116,7 @@ export type FramingDialogData = {
     MatDialogModule,
     MatProgressSpinnerModule,
     CdkDrag,
+    SettingsHistoryDialogComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -176,6 +178,7 @@ export class AppComponent {
   currentBrandName = '';
   currentLogo = '';
   currentPrimaryColor = '#3f51b5';
+  settingsHistory: any[] = [];
   fillWithPreviousSettings = false;
   displayObjectTracking = true;
   moveCropArea = false;
@@ -1392,17 +1395,18 @@ export class AppComponent {
     }
   }
 
-  onFillPreviousSettingsChange() {
-    if (this.fillWithPreviousSettings) {
-      this.loadPersonalizationSettings();
-      this.brandName = this.currentBrandName;
-      this.logoPreview = this.currentLogo;
-      this.primaryColor = this.currentPrimaryColor;
-    } else {
-      this.brandName = '';
-      this.logoPreview = '';
-      this.primaryColor = '#3f51b5';
-    }
+  openSettingsHistory() {
+    const dialogRef = this.dialog.open(SettingsHistoryDialogComponent, {
+      data: { history: this.settingsHistory },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.brandName = result.brandName;
+        this.logoPreview = result.logo;
+        this.primaryColor = result.primaryColor;
+      }
+    });
   }
 
   saveSettings() {
@@ -1413,6 +1417,14 @@ export class AppComponent {
     };
 
     localStorage.setItem('uiPersonalizationSettings', JSON.stringify(settings));
+
+    // Add to history
+    const history = JSON.parse(localStorage.getItem('uiPersonalizationHistory') || '[]');
+    history.unshift(settings);
+    // Keep only the last 10 entries
+    const uniqueHistory = history.filter((v: any,i: any,a: any)=>a.findIndex((t: any)=>(t.brandName === v.brandName && t.logo === v.logo && t.primaryColor === v.primaryColor))===i);
+    localStorage.setItem('uiPersonalizationHistory', JSON.stringify(uniqueHistory.slice(0, 10)));
+    this.settingsHistory = uniqueHistory.slice(0, 10);
 
     // Apply settings immediately
     this.currentBrandName = this.brandName;
@@ -1463,6 +1475,11 @@ export class AppComponent {
       
       // Apply the theme
       this.applyDynamicTheme();
+    }
+
+    const history = localStorage.getItem('uiPersonalizationHistory');
+    if (history) {
+      this.settingsHistory = JSON.parse(history);
     }
   }
 

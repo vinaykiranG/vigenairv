@@ -1,0 +1,13 @@
+<h1 mat-dialog-title>Settings History</h1>
+<div mat-dialog-content>
+  <mat-list>
+    <mat-list-item *ngFor="let setting of data.history" (click)="onSelect(setting)">
+      <img matListItemAvatar [src]="setting.logo || './assets/dummy.svg'" alt="Logo">
+      <h3 matListItemTitle>{{ setting.brandName }}</h3>
+      <p matListItemLine>
+        <span class="color-swatch" [style.backgroundColor]="setting.primaryColor"></span>
+        {{ setting.primaryColor }}
+      </p>
+    </mat-list-item>
+  </mat-list>
+</div>

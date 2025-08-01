@@ -860,11 +860,11 @@ limitations under the License.
     <div class="settings-container" style="padding: 1rem;">
       <h3>App Settings</h3>
       
-      <!-- Checkbox to fill with previous settings -->
+      <!-- Button to open settings history -->
       <div style="margin-bottom: 1rem;">
-        <mat-checkbox [(ngModel)]="fillWithPreviousSettings" (change)="onFillPreviousSettingsChange()">
-          Fill with previous settings
-        </mat-checkbox>
+        <button mat-stroked-button color="primary" (click)="openSettingsHistory()">
+          Load from History
+        </button>
       </div>
       
       <mat-divider style="margin: 1rem 0;"></mat-divider>
