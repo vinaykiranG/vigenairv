@@ -1365,4 +1365,22 @@ export class AppComponent {
       error: err => this.failHandler(err),
     });
   }
+
+  onLegalDisclaimerApplied(event: {
+    segmentId: string;
+    text: string | undefined;
+  }) {
+    if (this.originalAvSegments) {
+      const segment = this.originalAvSegments.find(
+        (seg: AvSegment) => seg.av_segment_id === event.segmentId
+      );
+      if (segment) {
+        if (event.text) {
+          segment.legal_disclaimer_text = event.text;
+        } else {
+          delete segment.legal_disclaimer_text;
+        }
+      }
+    }
+  }
 }

@@ -73,6 +73,10 @@ export class SegmentsListComponent {
 
   @Output() seekToSegmentEvent = new EventEmitter<string>();
   @Output() segmentSplitEvent = new EventEmitter<SegmentMarker[]>();
+  @Output() legalDisclaimerApplied = new EventEmitter<{
+    segmentId: string;
+    text: string | undefined;
+  }>();
 
   @ViewChildren('segmentVideoElem')
   segmentVideoElems?: QueryList<ElementRef<HTMLVideoElement>>;
@@ -245,6 +249,7 @@ export class SegmentsListComponent {
       } else {
         delete segment.legal_disclaimer_text;
       }
+      this.legalDisclaimerApplied.emit({ segmentId, text });
     }
   }
 }
