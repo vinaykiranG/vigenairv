@@ -274,3 +274,25 @@ mat-divider {
   margin-bottom: 16px;
   justify-content: start;
 }
+
+.settings-history-menu {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+.history-color-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-left: 12px;
+  border: 1px solid #ccc;
+}

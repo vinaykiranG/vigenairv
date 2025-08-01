@@ -33,6 +33,7 @@ import {
   MatExpansionModule,
   MatExpansionPanel,
 } from '@angular/material/expansion';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -73,7 +74,6 @@ import {
 import { FileChooserComponent } from './file-chooser/file-chooser.component';
 import { SmartFramingDialog } from './framing-dialog/framing-dialog.component';
 import { SegmentsListComponent } from './segments-list/segments-list.component';
-import { SettingsHistoryDialogComponent } from './settings-history-dialog/settings-history-dialog.component';
 import { VideoComboComponent } from './video-combo/video-combo.component';
 
 type ProcessStatus = 'hourglass_top' | 'pending' | 'check_circle';
@@ -116,7 +116,7 @@ export type FramingDialogData = {
     MatDialogModule,
     MatProgressSpinnerModule,
     CdkDrag,
-    SettingsHistoryDialogComponent,
+    MatMenuModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -1395,18 +1395,10 @@ export class AppComponent {
     }
   }
 
-  openSettingsHistory() {
-    const dialogRef = this.dialog.open(SettingsHistoryDialogComponent, {
-      data: { history: this.settingsHistory },
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.brandName = result.brandName;
-        this.logoPreview = result.logo;
-        this.primaryColor = result.primaryColor;
-      }
-    });
+  applyHistorySetting(setting: any) {
+    this.brandName = setting.brandName;
+    this.logoPreview = setting.logo;
+    this.primaryColor = setting.primaryColor;
   }
 
   saveSettings() {

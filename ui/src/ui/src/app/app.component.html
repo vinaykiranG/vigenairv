@@ -862,9 +862,16 @@ limitations under the License.
       
       <!-- Button to open settings history -->
       <div style="margin-bottom: 1rem;">
-        <button mat-stroked-button color="primary" (click)="openSettingsHistory()">
+        <button mat-stroked-button color="primary" [matMenuTriggerFor]="historyMenu">
           Load from History
         </button>
+        <mat-menu #historyMenu="matMenu" class="settings-history-menu">
+          <button mat-menu-item *ngFor="let setting of settingsHistory" (click)="applyHistorySetting(setting)">
+            <img [src]="setting.logo || './assets/dummy.svg'" alt="Logo" class="history-logo">
+            <span>{{ setting.brandName }}</span>
+            <span class="history-color-swatch" [style.backgroundColor]="setting.primaryColor"></span>
+          </button>
+        </mat-menu>
       </div>
       
       <mat-divider style="margin: 1rem 0;"></mat-divider>
