@@ -2,12 +2,15 @@
 <div mat-dialog-content>
   <mat-list>
     <mat-list-item *ngFor="let setting of data.history" (click)="onSelect(setting)">
-      <img matListItemAvatar [src]="setting.logo || './assets/dummy.svg'" alt="Logo">
-      <h3 matListItemTitle>{{ setting.brandName }}</h3>
-      <p matListItemLine>
+      <img matListItemAvatar [src]="setting.logo || './assets/dummy.svg'" alt="Logo" class="logo">
+      <div matListItemTitle class="brand-name">{{ setting.brandName }}</div>
+      <div matListItemLine class="color-info">
         <span class="color-swatch" [style.backgroundColor]="setting.primaryColor"></span>
-        {{ setting.primaryColor }}
-      </p>
+        <span>{{ setting.primaryColor }}</span>
+      </div>
     </mat-list-item>
   </mat-list>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="dialogRef.close()">Cancel</button>
 </div>
