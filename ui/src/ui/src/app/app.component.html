@@ -578,6 +578,28 @@ limitations under the License.
             </span>
           </div>
           <div class="user-settings">
+            <mat-form-field
+              subscriptSizing="dynamic"
+              style="width: 400px; margin-top: 8px"
+            >
+              <mat-label>Overlay Text or Image URL</mat-label>
+              <input
+                matInput
+                [(ngModel)]="overlayText"
+                placeholder="e.g. 'My Watermark' or 'https://example.com/logo.png'"
+              />
+              <button
+                *ngIf="overlayText"
+                matSuffix
+                mat-icon-button
+                aria-label="Clear"
+                (click)="overlayText = ''"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+          <div class="user-settings">
             <mat-checkbox color="primary" [(ngModel)]="demandGenAssets">
               Generate Demand Gen assets
             </mat-checkbox>

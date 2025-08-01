@@ -80,6 +80,7 @@ export interface RenderSettings {
   use_continuous_audio: boolean;
   fade_out: boolean;
   overlay_type?: OverlayType;
+  overlay_text?: string;
 }
 
 export interface RenderQueue {

@@ -29,6 +29,7 @@ import sys
 import tempfile
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
 from urllib import parse
+import requests
 
 import config as ConfigService
 import pandas as pd
@@ -36,6 +37,15 @@ import storage as StorageService
 import utils as Utils
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part
+
+
+def _is_url(url: str) -> bool:
+  """Checks if a string is a valid URL."""
+  try:
+    result = parse.urlparse(url)
+    return all([result.scheme, result.netloc])
+  except ValueError:
+    return False
 
 
 @dataclasses.dataclass(init=False)
@@ -54,6 +64,7 @@ class VideoVariantRenderSettings:
       audio track portions.
     fade_out: Whether to fade out the end of the video variant.
     overlay_type: How to overlay music / audio for the variant.
+    overlay_text: The text or image URL to overlay on the video.
   """
 
   generate_image_assets: bool = False
@@ -63,6 +74,7 @@ class VideoVariantRenderSettings:
   use_continuous_audio: bool = False
   fade_out: bool = False
   overlay_type: Utils.RenderOverlayType = None
+  overlay_text: Optional[str] = None
 
   def __init__(self, **kwargs):
     field_names = set([f.name for f in dataclasses.fields(self)])
@@ -677,6 +689,47 @@ def _render_video_variant(
       )
   )
   video_duration = Utils.get_media_duration(video_file_path)
+  overlay_filter = None
+  if (
+      video_variant.render_settings.overlay_text
+      and video_variant.render_settings.overlay_text.strip()
+  ):
+    overlay_text = video_variant.render_settings.overlay_text
+    if _is_url(overlay_text):
+      try:
+        tmp_dir_for_image = tempfile.mkdtemp()
+        response = requests.get(overlay_text, stream=True)
+        response.raise_for_status()
+        parsed_url = parse.urlparse(overlay_text)
+        filename = os.path.basename(parsed_url.path)
+        overlay_image_path = os.path.join(tmp_dir_for_image, filename)
+
+        with open(overlay_image_path, 'wb') as f:
+          for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+        escaped_path = (
+            overlay_image_path.replace('\\', '/')
+            .replace(':', '\\\\:')
+            .replace("'", "\\\\'")
+        )
+        overlay_filter = (
+            f"movie='{escaped_path}'[logo];"
+            '[vtmp][logo]overlay=W-w-5:H-h-5[outv]'
+        )
+      except requests.exceptions.RequestException as e:
+        logging.warning('Could not download overlay image: %s', e)
+    else:
+      escaped_text = (
+          overlay_text.replace('\\', '\\\\\\\\')
+          .replace("'", '')
+          .replace(':', '\\:')
+          .replace('%', '%%')
+      )
+      overlay_filter = (
+          f"[vtmp]drawtext=text='{escaped_text}':fontcolor=white:fontsize=24:"
+          'box=1:boxcolor=black@0.5:boxborderw=5:x=w-tw-10:y=h-th-10[outv]'
+      )
+
   (
       full_av_select_filter,
       music_overlay_select_filter,
@@ -698,6 +751,8 @@ def _render_video_variant(
       full_av_select_filter=full_av_select_filter,
       music_overlay_select_filter=music_overlay_select_filter,
       continuous_audio_select_filter=continuous_audio_select_filter,
+      overlay_filter=overlay_filter,
+      overlay_image_path=overlay_image_path,
   )
 
   horizontal_combo_name = f'combo_{video_variant.variant_id}_h{video_ext}'
@@ -821,13 +876,15 @@ def _get_variant_ffmpeg_commands(
     full_av_select_filter: str,
     music_overlay_select_filter: str,
     continuous_audio_select_filter: str,
+    overlay_filter: Optional[str],
 ):
+  """Returns the ffmpeg commands for a variant."""
   ffmpeg_cmds = [
       'ffmpeg',
       '-i',
       video_file_path,
   ]
-  if (music_overlay and speech_track_path and music_track_path):
+  if music_overlay and speech_track_path and music_track_path:
     ffmpeg_cmds.extend([
         '-i',
         speech_track_path,
@@ -840,12 +897,13 @@ def _get_variant_ffmpeg_commands(
       ffmpeg_filter = [continuous_audio_select_filter]
     elif music_overlay:
       ffmpeg_filter = [music_overlay_select_filter, '-ac', '2']
-  ffmpeg_cmds.extend([
-      '-filter_complex',
-  ] + ffmpeg_filter + [
-      '-map',
-      '[outv]',
-  ])
+
+  if overlay_filter:
+    ffmpeg_filter[0] += f';{overlay_filter}'
+  else:
+    ffmpeg_filter[0] += ';[vtmp]null[outv]'
+
+  ffmpeg_cmds.extend(['-filter_complex'] + ffmpeg_filter + ['-map', '[outv]'])
   if has_audio:
     ffmpeg_cmds.extend([
         '-map',
@@ -1384,30 +1442,38 @@ def _build_ffmpeg_filters(
       overlay_start = variant_first_segment_start
 
   full_av_select_filter = ''.join(
-      video_select_filter + audio_select_filter + select_filter_concat
-      + [f'concat=n={idx}:v=1:a=1[outv][outa]', fade_out_filter]
+      video_select_filter
+      + audio_select_filter
+      + select_filter_concat
+      + [f'concat=n={idx}:v=1:a=1[vtmp][outa]', fade_out_filter]
   ) if has_audio else ''.join(
-      video_select_filter + select_filter_concat
-      + [f'concat=n={idx}:v=1[outv]']
+      video_select_filter
+      + select_filter_concat
+      + [f'concat=n={idx}:v=1[vtmp]']
   )
 
   music_overlay_select_filter = ''.join(
       video_select_filter
-      + [entry.replace('0:a', '1:a') for entry in audio_select_filter] + [
+      + [entry.replace('0:a', '1:a') for entry in audio_select_filter]
+      + [
           f"[2:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
           ',asetpts=N/SR/TB[music];'
-      ] + select_filter_concat + [
-          f'concat=n={idx}:v=1:a=1[outv][tempa];',
+      ]
+      + select_filter_concat
+      + [
+          f'concat=n={idx}:v=1:a=1[vtmp][tempa];',
           '[tempa][music]amerge=inputs=2[outa]',
           fade_out_filter,
       ]
   ) if has_audio else ''
   continuous_audio_select_filter = ''.join(
-      video_select_filter + [
+      video_select_filter
+      + [
           f"[0:a]aselect='between(t,{overlay_start},{overlay_start+duration})'"
           ',asetpts=N/SR/TB[outa];'
-      ] + [entry for entry in select_filter_concat if entry.startswith('[v')]
-      + [f'concat=n={idx}:v=1[outv]', fade_out_filter]
+      ]
+      + [entry for entry in select_filter_concat if entry.startswith('[v]')]
+      + [f'concat=n={idx}:v=1[vtmp]', fade_out_filter]
   ) if has_audio else ''
 
   return (

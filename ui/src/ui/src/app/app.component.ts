@@ -153,6 +153,7 @@ export class AppComponent {
   step = 0;
   audioSettings = 'segment';
   overlaySettings: OverlayType = 'variant_start';
+  overlayText = '';
   fadeOut = false;
   demandGenAssets = true;
   analyseAudio = true;
@@ -1107,6 +1108,7 @@ export class AppComponent {
       use_continuous_audio: this.audioSettings === 'continuous',
       fade_out: this.fadeOut,
       overlay_type: this.overlaySettings,
+      overlay_text: this.overlayText,
     };
     const selectedScenes = selectedSegments.map(
       (segment: AvSegment) => segment.av_segment_id
