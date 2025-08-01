@@ -1466,73 +1466,30 @@ export class AppComponent {
     }
   }
 
+  hexToRgb(hex: string) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
+  getContrastColor(hexColor: string): string {
+    const rgb = this.hexToRgb(hexColor);
+    if (!rgb) {
+      return '#000000';
+    }
+    // Formula from http://www.w3.org/TR/AERT#color-contrast
+    const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+  }
+
   applyDynamicTheme() {
-    // Create a style element to override CSS custom properties
-    let styleElement = document.getElementById('dynamic-theme-styles') as HTMLStyleElement;
-    if (!styleElement) {
-      styleElement = document.createElement('style');
-      styleElement.id = 'dynamic-theme-styles';
-      document.head.appendChild(styleElement);
-    }
-    
     const color = this.currentPrimaryColor || '#3f51b5';
-    
-    // Convert hex to RGB for material design color variations
-    const hexToRgb = (hex: string) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : null;
-    };
-    
-    const rgb = hexToRgb(color);
-    if (rgb) {
-      styleElement.innerHTML = `
-        :root {
-          --primary-color: ${color};
-          --primary-color-rgb: ${rgb.r}, ${rgb.g}, ${rgb.b};
-        }
-        
-        .mat-toolbar.mat-primary {
-          background-color: ${color} !important;
-        }
-        
-        .mat-button.mat-primary,
-        .mat-icon-button.mat-primary,
-        .mat-stroked-button.mat-primary {
-          color: ${color} !important;
-        }
+    const contrastColor = this.getContrastColor(color);
 
-        .mat-flat-button.mat-primary,
-        .mat-raised-button.mat-primary,
-        .mat-fab.mat-primary,
-        .mat-mini-fab.mat-primary {
-          background-color: ${color} !important;
-        }
-
-        .mat-stroked-button.mat-primary {
-          border-color: ${color} !important;
-        }
-        
-        .mat-form-field.mat-focused .mat-form-field-label {
-          color: ${color} !important;
-        }
-        
-        .mat-form-field.mat-focused .mat-form-field-ripple {
-          background-color: ${color} !important;
-        }
-        
-        .mat-checkbox-checked .mat-checkbox-background {
-          background-color: ${color} !important;
-        }
-
-        .mat-button-toggle-checked {
-          background-color: ${color} !important;
-          color: #fff !important;
-        }
-      `;
-    }
+    document.documentElement.style.setProperty('--primary-color', color);
+    document.documentElement.style.setProperty('--primary-contrast-color', contrastColor);
   }
 }
