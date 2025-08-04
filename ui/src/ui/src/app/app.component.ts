@@ -71,7 +71,10 @@ import {
   SegmentMarker,
   VariantTextAsset,
 } from './api-calls/api-calls.service.interface';
+import { AppSetting } from './app-settings.interface';
+import { AppSettingsService } from './app-settings.service';
 import { FileChooserComponent } from './file-chooser/file-chooser.component';
+import { ModalService } from './modal.service';
 import { SmartFramingDialog } from './framing-dialog/framing-dialog.component';
 import { SegmentsListComponent } from './segments-list/segments-list.component';
 import { VideoComboComponent } from './video-combo/video-combo.component';
@@ -117,6 +120,8 @@ export type FramingDialogData = {
     MatProgressSpinnerModule,
     CdkDrag,
     MatMenuModule,
+    MatTableModule,
+    MatIconModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -179,6 +184,7 @@ export class AppComponent {
   currentLogo = '';
   currentPrimaryColor = '#3f51b5';
   settingsHistory: any[] = [];
+  currentSetting: AppSetting | null = null;
   fillWithPreviousSettings = false;
   displayObjectTracking = true;
   moveCropArea = false;
@@ -234,7 +240,9 @@ export class AppComponent {
   constructor(
     private apiCallsService: ApiCallsService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private modalService: ModalService,
+    private appSettingsService: AppSettingsService,
   ) {
     this.getPreviousRuns();
     this.getWebAppUrl();
@@ -1395,10 +1403,28 @@ export class AppComponent {
     }
   }
 
-  applyHistorySetting(setting: any) {
+  applyHistorySetting(setting: AppSetting) {
+    this.currentSetting = setting;
     this.brandName = setting.brandName;
     this.logoPreview = setting.logo;
     this.primaryColor = setting.primaryColor;
+    this.applyDynamicTheme();
+  }
+
+  openHistoryModal(): void {
+    this.modalService.openHistoryModal().afterClosed().subscribe(result => {
+      if (result) {
+        this.applyHistorySetting(result);
+      }
+    });
+  }
+
+  saveCurrentSetting(): void {
+    this.appSettingsService.addSettingToHistory({
+      brandName: this.brandName,
+      logo: this.logoPreview,
+      primaryColor: this.primaryColor,
+    });
   }
 
   saveSettings() {

@@ -860,67 +860,9 @@ limitations under the License.
     <div class="settings-container" style="padding: 1rem;">
       <h3>App Settings</h3>
       
-      <!-- Button to open settings history -->
-      <div style="margin-bottom: 1rem;">
-        <button mat-stroked-button color="primary" [matMenuTriggerFor]="historyMenu">
-          Load from History
-        </button>
-        <mat-menu #historyMenu="matMenu" class="settings-history-menu">
-          <button mat-menu-item *ngFor="let setting of settingsHistory" (click)="applyHistorySetting(setting)">
-            <img [src]="setting.logo || './assets/dummy.svg'" alt="Logo" class="history-logo">
-            <span>{{ setting.brandName }}</span>
-            <span class="history-color-swatch" [style.backgroundColor]="setting.primaryColor"></span>
-          </button>
-        </mat-menu>
-      </div>
-      
-      <mat-divider style="margin: 1rem 0;"></mat-divider>
-      
-      <!-- 1. Logo Section -->
-      <div class="logo-section" style="text-align: center;">
-        <img
-          [src]="logoPreview || './assets/dummy.svg'"
-          alt="Logo"
-          style="max-height: 80px; margin-bottom: 1rem;"
-        /> <br>
-        <input type="file" #logoInput hidden (change)="onLogoSelected($event)" accept="image/*" />
-        <button mat-raised-button color="primary" (click)="logoInput.click()">Upload Logo</button>
-      </div>
-
-      <mat-divider style="margin: 1rem 0;"></mat-divider>
-
-      <!-- 2. Brand Name Input -->
-      <mat-form-field appearance="fill" style="width: 90%;">
-        <mat-label>Brand Name</mat-label>
-        <input matInput [(ngModel)]="brandName" />
-      </mat-form-field>
-
-      <mat-divider style="margin: 1rem 0;"></mat-divider>
-
-      <!-- 3. Color Pickers -->
-      <div class="colorPickerSec">
-        <label for="colorPicker" style="font-weight: 500; display: block; margin-bottom: 8px;">
-          Choose Theme Color
-        </label>
-        <input
-          id="colorPicker"
-          type="color"
-          [(ngModel)]="primaryColor"
-          style="width: 120px; height: 40px; border: none; border-radius: 3em; background: none; cursor: pointer;"
-        />
-      </div>
-
-      <mat-divider style="margin: 1rem 0;"></mat-divider>
-      
-      <div style="display: flex; justify-content: center; align-items: center; gap: 1em;">
-        <!-- Save Button -->
-        <button mat-raised-button color="primary" (click)="saveSettings()">
-          Save
-        </button>
-        <!-- Reset Button -->
-        <button mat-raised-button color="primary" (click)="resetSettings()">
-          Reset
-        </button>
+      <div class="button-group">
+        <button mat-raised-button color="primary" (click)="saveCurrentSetting()">Save Current Setting</button>
+        <button mat-raised-button (click)="openHistoryModal()">Load from History</button>
       </div>
     </div>
   </mat-sidenav>

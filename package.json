@@ -34,11 +34,13 @@
     "fs-extra": "^11.2.0",
     "prompts": "^2.4.2",
     "replace": "^1.2.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/cross-spawn": "^6.0.6",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^20.12.7"
+    "@types/node": "^20.12.7",
+    "@types/uuid": "^10.0.0"
   }
 }

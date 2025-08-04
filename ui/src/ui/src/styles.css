@@ -24,3 +24,8 @@ body {
   margin: 0;
   font-family: 'Google Sans', Roboto, 'Helvetica Neue', sans-serif;
 }
+
+.custom-history-modal .mat-dialog-container {
+  border-radius: 12px;
+  padding: 24px;
+}
