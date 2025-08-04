@@ -827,7 +827,16 @@ limitations under the License.
           [(ngModel)]="renderQueueName"
         />
       </mat-form-field>
-
+      <mat-form-field
+        matTooltip="Add a text overlay to the rendered videos."
+      >
+        <mat-label>Text overlay</mat-label>
+        <input
+          matInput
+          placeholder="e.g. 'My awesome text overlay'"
+          [(ngModel)]="textOverlay"
+        />
+      </mat-form-field>
       <button
         type="button"
         mat-raised-button

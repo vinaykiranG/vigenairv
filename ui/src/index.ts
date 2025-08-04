@@ -161,8 +161,19 @@ function renderVariants(gcsFolder: string, renderQueue: RenderQueue): string {
     );
   }
 
+  const data: {
+    queue: RenderQueue['queue'];
+    textOverlay?: string;
+  } = {
+    queue: renderQueue.queue,
+  };
+
+  if (renderQueue.textOverlay) {
+    data.textOverlay = renderQueue.textOverlay;
+  }
+
   const encodedRenderQueueJson = Utilities.base64Encode(
-    JSON.stringify(renderQueue.queue),
+    JSON.stringify(data),
     Utilities.Charset.UTF_8
   );
   StorageManager.uploadFile(

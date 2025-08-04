@@ -168,6 +168,7 @@ export class AppComponent {
   renderQueue: RenderQueueVariant[] = [];
   renderQueueJsonArray: string[] = [];
   renderQueueName = '';
+  textOverlay = '';
   displayObjectTracking = true;
   moveCropArea = false;
   weightsTextIndex = 3;
@@ -1199,6 +1200,7 @@ export class AppComponent {
       .renderVariants(this.folder, {
         queue: this.renderQueue,
         queueName: this.renderQueueName,
+        textOverlay: this.textOverlay,
         squareCropAnalysis: this.squareVideoObjects,
         verticalCropAnalysis: this.verticalVideoObjects,
         sourceDimensions: {

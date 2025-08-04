@@ -86,6 +86,7 @@ export interface RenderSettings {
 export interface RenderQueue {
   queue: RenderQueueVariant[];
   queueName: string;
+  textOverlay: string;
   squareCropAnalysis: any;
   verticalCropAnalysis: any;
   sourceDimensions: { w: number; h: number };

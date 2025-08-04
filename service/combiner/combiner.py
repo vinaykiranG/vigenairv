@@ -134,6 +134,7 @@ class VideoVariant:
   score: float
   score_reasoning: str
   render_settings: VideoVariantRenderSettings
+  text_overlay: str | None = None
 
   def __init__(self, **kwargs):
     field_names = set([f.name for f in dataclasses.fields(self)])
@@ -347,12 +348,15 @@ class Combiner:
         bucket_name=self.gcs_bucket_name,
         fetch_contents=True,
     )
+    render_json = json.loads(render_file_contents.decode('utf-8'))
     video_variant = list(
         map(
             _video_variant_mapper,
-            enumerate(json.loads(render_file_contents.decode('utf-8'))),
+            enumerate(render_json['queue'] if 'queue' in render_json else render_json),
         )
     )[0]
+    if 'textOverlay' in render_json:
+      video_variant.text_overlay = render_json['textOverlay']
     combos_dir = tempfile.mkdtemp()
     rendered_combos = {}
     rendered_variant_paths = _render_video_variant(
@@ -454,10 +458,11 @@ class Combiner:
         bucket_name=self.gcs_bucket_name,
         fetch_contents=True,
     )
+    render_json = json.loads(render_file_contents.decode('utf-8'))
     video_variants = list(
         map(
             _video_variant_mapper,
-            enumerate(json.loads(render_file_contents.decode('utf-8'))),
+            enumerate(render_json['queue']),
         )
     )
     logging.info(
@@ -491,8 +496,12 @@ class Combiner:
           combos_dir,
           variant_destination_file_path,
       )
+      data = {'queue': [variant_dict]}
+      if 'textOverlay' in render_json:
+        data['textOverlay'] = render_json['textOverlay']
+
       with open(variant_json_path, 'w', encoding='utf8') as f:
-        json.dump([variant_dict], f, indent=2)
+        json.dump(data, f, indent=2)
 
       StorageService.upload_gcs_file(
           file_path=variant_json_path,
@@ -715,6 +724,7 @@ def _render_video_variant(
       music_overlay_select_filter=music_overlay_select_filter,
       continuous_audio_select_filter=continuous_audio_select_filter,
       legal_disclaimers=legal_disclaimers,
+      text_overlay=video_variant.text_overlay,
   )
 
   horizontal_combo_name = f'combo_{video_variant.variant_id}_h{video_ext}'
@@ -782,6 +792,7 @@ def _render_video_variant(
           music_overlay_select_filter=music_overlay_select_filter,
           continuous_audio_select_filter=continuous_audio_select_filter,
           legal_disclaimers=legal_disclaimers,
+          text_overlay=video_variant.text_overlay,
       )
     rendered_paths[format_type] = _render_format(
         vision_model=vision_model,
@@ -840,6 +851,7 @@ def _get_variant_ffmpeg_commands(
     music_overlay_select_filter: str,
     continuous_audio_select_filter: str,
     legal_disclaimers: Optional[Sequence[Tuple[str, float, float]]] = None,
+    text_overlay: Optional[str] = None,
 ):
   ffmpeg_cmds = [
       'ffmpeg',
@@ -859,18 +871,22 @@ def _get_variant_ffmpeg_commands(
       ffmpeg_filter = [continuous_audio_select_filter]
     elif music_overlay:
       ffmpeg_filter = [music_overlay_select_filter, '-ac', '2']
-  if legal_disclaimers:
-    disclaimer_filter = ffmpeg_filter[0]
+  if legal_disclaimers or text_overlay:
+    complex_filter = ffmpeg_filter[0]
     last_label = 'outv'
-    for i, (text, start, end) in enumerate(legal_disclaimers):
-      out_label = 'outv' if i == len(legal_disclaimers) - 1 else f'ld{i}'
-      escaped = text.replace("'", "\\'").replace(':', '\\:')
-      disclaimer_filter += (
-          f";[{last_label}]drawtext=text='{escaped}':x=(w-text_w)/2:y=h-line_h-10"
-          f":fontcolor=white:fontsize=24:box=1:boxcolor=black@0.5:enable='between(t,{start},{end})'[{out_label}]"
-      )
-      last_label = out_label
-    ffmpeg_filter = [disclaimer_filter]
+    if legal_disclaimers:
+      for i, (text, start, end) in enumerate(legal_disclaimers):
+        out_label = 'outv' if i == len(legal_disclaimers) - 1 and not text_overlay else f'ld{i}'
+        escaped = text.replace("'", "\\'").replace(':', '\\:')
+        complex_filter += (
+            f";[{last_label}]drawtext=text='{escaped}':x=(w-text_w)/2:y=h-line_h-10"
+            f":fontcolor=white:fontsize=24:box=1:boxcolor=black@0.5:enable='between(t,{start},{end})'[{out_label}]"
+        )
+        last_label = out_label
+    if text_overlay:
+      escaped_text = text_overlay.replace("'", "\\'").replace(':', '\\:')
+      complex_filter += f";[{last_label}]drawtext=text='{escaped_text}':x=(w-text_w)/2:y=(h-text_h)/2:fontcolor=white:fontsize=24:box=1:boxcolor=black@0.5[outv]"
+    ffmpeg_filter = [complex_filter]
   ffmpeg_cmds.extend([
       '-filter_complex',
   ] + ffmpeg_filter + [
