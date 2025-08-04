@@ -33,7 +33,6 @@ import {
   MatExpansionModule,
   MatExpansionPanel,
 } from '@angular/material/expansion';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -71,10 +70,7 @@ import {
   SegmentMarker,
   VariantTextAsset,
 } from './api-calls/api-calls.service.interface';
-import { AppSetting } from './app-settings.interface';
-import { AppSettingsService } from './app-settings.service';
 import { FileChooserComponent } from './file-chooser/file-chooser.component';
-import { ModalService } from './modal.service';
 import { SmartFramingDialog } from './framing-dialog/framing-dialog.component';
 import { SegmentsListComponent } from './segments-list/segments-list.component';
 import { VideoComboComponent } from './video-combo/video-combo.component';
@@ -119,8 +115,6 @@ export type FramingDialogData = {
     MatDialogModule,
     MatProgressSpinnerModule,
     CdkDrag,
-    MatMenuModule,
-    MatIconModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -182,8 +176,6 @@ export class AppComponent {
   currentBrandName = '';
   currentLogo = '';
   currentPrimaryColor = '#3f51b5';
-  settingsHistory: any[] = [];
-  currentSetting: AppSetting | null = null;
   fillWithPreviousSettings = false;
   displayObjectTracking = true;
   moveCropArea = false;
@@ -239,9 +231,7 @@ export class AppComponent {
   constructor(
     private apiCallsService: ApiCallsService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog,
-    private modalService: ModalService,
-    private appSettingsService: AppSettingsService,
+    private dialog: MatDialog
   ) {
     this.getPreviousRuns();
     this.getWebAppUrl();
@@ -1402,28 +1392,17 @@ export class AppComponent {
     }
   }
 
-  applyHistorySetting(setting: AppSetting) {
-    this.currentSetting = setting;
-    this.brandName = setting.brandName;
-    this.logoPreview = setting.logo;
-    this.primaryColor = setting.primaryColor;
-    this.applyDynamicTheme();
-  }
-
-  openHistoryModal(): void {
-    this.modalService.openHistoryModal().afterClosed().subscribe(result => {
-      if (result) {
-        this.applyHistorySetting(result);
-      }
-    });
-  }
-
-  saveCurrentSetting(): void {
-    this.appSettingsService.addSettingToHistory({
-      brandName: this.brandName,
-      logo: this.logoPreview,
-      primaryColor: this.primaryColor,
-    });
+  onFillPreviousSettingsChange() {
+    if (this.fillWithPreviousSettings) {
+      this.loadPersonalizationSettings();
+      this.brandName = this.currentBrandName;
+      this.logoPreview = this.currentLogo;
+      this.primaryColor = this.currentPrimaryColor;
+    } else {
+      this.brandName = '';
+      this.logoPreview = '';
+      this.primaryColor = '#3f51b5';
+    }
   }
 
   saveSettings() {
@@ -1434,14 +1413,6 @@ export class AppComponent {
     };
 
     localStorage.setItem('uiPersonalizationSettings', JSON.stringify(settings));
-
-    // Add to history
-    const history = JSON.parse(localStorage.getItem('uiPersonalizationHistory') || '[]');
-    history.unshift(settings);
-    // Keep only the last 10 entries
-    const uniqueHistory = history.filter((v: any,i: any,a: any)=>a.findIndex((t: any)=>(t.brandName === v.brandName && t.logo === v.logo && t.primaryColor === v.primaryColor))===i);
-    localStorage.setItem('uiPersonalizationHistory', JSON.stringify(uniqueHistory.slice(0, 10)));
-    this.settingsHistory = uniqueHistory.slice(0, 10);
 
     // Apply settings immediately
     this.currentBrandName = this.brandName;
@@ -1493,37 +1464,75 @@ export class AppComponent {
       // Apply the theme
       this.applyDynamicTheme();
     }
-
-    const history = localStorage.getItem('uiPersonalizationHistory');
-    if (history) {
-      this.settingsHistory = JSON.parse(history);
-    }
-  }
-
-  hexToRgb(hex: string) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null;
-  }
-
-  getContrastColor(hexColor: string): string {
-    const rgb = this.hexToRgb(hexColor);
-    if (!rgb) {
-      return '#000000';
-    }
-    // Formula from http://www.w3.org/TR/AERT#color-contrast
-    const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
-    return luminance > 0.5 ? '#000000' : '#ffffff';
   }
 
   applyDynamicTheme() {
-    const color = this.currentPrimaryColor || '#3f51b5';
-    const contrastColor = this.getContrastColor(color);
+    // Create a style element to override CSS custom properties
+    let styleElement = document.getElementById('dynamic-theme-styles') as HTMLStyleElement;
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = 'dynamic-theme-styles';
+      document.head.appendChild(styleElement);
+    }
 
-    document.documentElement.style.setProperty('--primary-color', color);
-    document.documentElement.style.setProperty('--primary-contrast-color', contrastColor);
+    const color = this.currentPrimaryColor || '#3f51b5';
+
+    // Convert hex to RGB for material design color variations
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
+
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      styleElement.innerHTML = `
+        :root {
+          --primary-color: ${color};
+          --primary-color-rgb: ${rgb.r}, ${rgb.g}, ${rgb.b};
+        }
+
+        .mat-toolbar.mat-primary {
+          background-color: ${color} !important;
+        }
+
+        .mat-button.mat-primary,
+        .mat-icon-button.mat-primary,
+        .mat-stroked-button.mat-primary {
+          color: ${color} !important;
+        }
+
+        .mat-flat-button.mat-primary,
+        .mat-raised-button.mat-primary,
+        .mat-fab.mat-primary,
+        .mat-mini-fab.mat-primary {
+          background-color: ${color} !important;
+        }
+
+        .mat-stroked-button.mat-primary {
+          border-color: ${color} !important;
+        }
+
+        .mat-form-field.mat-focused .mat-form-field-label {
+          color: ${color} !important;
+        }
+
+        .mat-form-field.mat-focused .mat-form-field-ripple {
+          background-color: ${color} !important;
+        }
+
+        .mat-checkbox-checked .mat-checkbox-background {
+          background-color: ${color} !important;
+        }
+
+        .mat-button-toggle-checked {
+          background-color: ${color} !important;
+          color: #fff !important;
+        }
+      `;
+    }
   }
 }
