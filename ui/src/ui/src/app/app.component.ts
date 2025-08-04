@@ -120,7 +120,6 @@ export type FramingDialogData = {
     MatProgressSpinnerModule,
     CdkDrag,
     MatMenuModule,
-    MatTableModule,
     MatIconModule,
   ],
   templateUrl: './app.component.html',

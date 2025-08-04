@@ -29,7 +29,7 @@ export class HistoryModalComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
-    private dialogRef: MatDialogRef<HistoryModalComponent>,
+    public dialogRef: MatDialogRef<HistoryModalComponent>,
     private appSettingsService: AppSettingsService
   ) {
     this.historySettings$ = this.appSettingsService.historySettings$;
