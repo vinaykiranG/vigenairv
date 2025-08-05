@@ -1539,48 +1539,10 @@ export class AppComponent {
     
     const color = this.currentPrimaryColor || '#3f51b5';
     
-    // Convert hex to RGB for material design color variations
-    const hexToRgb = (hex: string) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : null;
-    };
-    
-    const rgb = hexToRgb(color);
-    if (rgb) {
-      styleElement.innerHTML = `
-        :root {
-          --primary-color: ${color};
-          --primary-color-rgb: ${rgb.r}, ${rgb.g}, ${rgb.b};
-        }
-        
-        .mat-toolbar.mat-primary {
-          background-color: ${color} !important;
-        }
-        
-        .mat-raised-button.mat-primary {
-          background-color: ${color} !important;
-        }
-
-        .mat-icon-button.mat-primary {
-          color: ${color} !important;
-        }
-        
-        .mat-form-field.mat-focused .mat-form-field-label {
-          color: ${color} !important;
-        }
-        
-        .mat-form-field.mat-focused .mat-form-field-ripple {
-          background-color: ${color} !important;
-        }
-        
-        .mat-checkbox-checked .mat-checkbox-background {
-          background-color: ${color} !important;
-        }
-      `;
-    }
+    styleElement.innerHTML = `
+      :root {
+        --mdc-theme-primary: ${color};
+      }
+    `;
   }
 }
