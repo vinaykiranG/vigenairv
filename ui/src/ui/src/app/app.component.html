@@ -870,7 +870,7 @@ limitations under the License.
       <mat-divider style="margin: 1rem 0;"></mat-divider>
       
       <!-- 1. Logo Section -->
-      <div *ngIf="pageIndex === 0" class="logo-section" style="text-align: center;">
+      <div class="logo-section" style="text-align: center;">
         <img
           [src]="logoPreview || './assets/dummy.svg'"
           alt="Logo"
@@ -883,7 +883,7 @@ limitations under the License.
       <mat-divider style="margin: 1rem 0;"></mat-divider>
 
       <!-- 2. Brand Name Input -->
-      <mat-form-field *ngIf="pageIndex === 0" appearance="fill" style="width: 90%;">
+      <mat-form-field appearance="fill" style="width: 90%;">
         <mat-label>Brand Name</mat-label>
         <input matInput [(ngModel)]="brandName" />
       </mat-form-field>
@@ -891,7 +891,7 @@ limitations under the License.
       <mat-divider style="margin: 1rem 0;"></mat-divider>
 
       <!-- 3. Color Pickers -->
-      <div *ngIf="pageIndex === 1" class="colorPickerSec">
+      <div class="colorPickerSec">
         <label for="colorPicker" style="font-weight: 500; display: block; margin-bottom: 8px;">
           Choose Theme Color
         </label>
@@ -914,14 +914,69 @@ limitations under the License.
         <button mat-raised-button color="primary" (click)="resetSettings()">
           Reset
         </button>
+        <!-- View Saved Settings Button -->
+        <button mat-raised-button color="primary" (click)="showSavedSettingsModal = true">
+          View Saved
+        </button>
       </div>
+    </div>
+  </mat-sidenav>
+  <ng-template [ngIf]="showSavedSettingsModal">
+    <div class="modal-backdrop" style="position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1000;" (click)="showSavedSettingsModal = false"></div>
+    <div class="modal-content"
+         style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: #fff; z-index:1001; padding: 2rem; border-radius: 8px;
+                width: 700px; height: 400px; min-width: 350px; min-height: 120px; box-sizing: border-box; position: fixed;">
+      <!-- Close icon at top right -->
+      <button mat-icon-button style="position: absolute; top: 8px; right: 8px; z-index: 1002;" (click)="showSavedSettingsModal = false" aria-label="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+      <h2 style="margin-top:0;">Saved Settings</h2>
+      <div style="overflow: auto; width: 100%; height: 300px;">
+        <table style="width:100%; border-collapse: collapse; margin-bottom: 1rem;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding: 8px;">Logo</th>
+              <th style="text-align:left; padding: 8px;">Name</th>
+              <th style="text-align:left; padding: 8px;">Color</th>
+              <th style="text-align:left; padding: 8px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let setting of paginatedSettingsList; let i = index">
+              <td style="padding: 8px;">
+                <img [src]="setting.logo || './assets/dummy.svg'" alt="Logo" style="height: 40px; width: 40px; object-fit: contain;" />
+              </td>
+              <td style="padding: 8px;">{{ setting.brandName }}</td>
+              <td style="padding: 8px;">
+                <span
+                  style="display:inline-block; width:24px; height:24px; border-radius:50%; border:1px solid #ccc; vertical-align:middle;"
+                  [style.background-color]="setting.primaryColor"
+                ></span>
+                <span style="margin-left:8px;">{{ setting.primaryColor }}</span>
+              </td>
+              <td style="padding: 8px;">
+                <button mat-icon-button color="warn" (click)="deleteSavedSetting(i)" matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+                <button mat-icon-button color="primary" (click)="applySavedSetting(i); showSavedSettingsModal = false" matTooltip="Apply">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!savedSettingsList || savedSettingsList.length === 0">
+              <td colspan="4" style="text-align:center; padding: 16px;">No saved settings.</td>
+            </tr>
+          </tbody>
+        </table>
+       </div>
       <mat-paginator
-        [length]="3"
-        [pageSize]="2"
+        [length]="savedSettingsList.length"
+        [pageSize]="pageSize"
         (page)="handlePageEvent($event)"
         aria-label="Select page of settings"
       >
       </mat-paginator>
     </div>
-  </mat-sidenav>
+  </ng-template>
 </mat-sidenav-container>

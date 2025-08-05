@@ -43,7 +43,6 @@ import {
   MatSlideToggle,
   MatSlideToggleModule,
 } from '@angular/material/slide-toggle';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -116,7 +115,6 @@ export type FramingDialogData = {
     MatDialogModule,
     MatProgressSpinnerModule,
     CdkDrag,
-    MatPaginatorModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -203,7 +201,11 @@ export class AppComponent {
   businessObjectives = Object.values(CONFIG.vertexAi.abcdBusinessObjectives);
   segmentMarkers: Record<string, SegmentMarker[]> = {};
   segmentSplitting = false;
+  showSavedSettingsModal = false;
+  savedSettingsList: any[] = [];
+  paginatedSettingsList: any[] = [];
   pageIndex = 0;
+  pageSize = 2;
 
   @ViewChild('VideoComboComponent') VideoComboComponent?: VideoComboComponent;
   @ViewChild('previewVideoElem')
@@ -239,6 +241,7 @@ export class AppComponent {
     this.getPreviousRuns();
     this.getWebAppUrl();
     this.loadPersonalizationSettings();
+    this.loadSavedSettings();
 
     // Allow locally served app to process query params.
     // Production env (Apps Script) is handled via ngAfterViewInit()
@@ -304,6 +307,55 @@ export class AppComponent {
 
   handlePageEvent(event: PageEvent) {
     this.pageIndex = event.pageIndex;
+    this.updatePaginatedSettings();
+  }
+
+  loadSavedSettings() {
+    const savedSettings = localStorage.getItem('savedSettingsList');
+    if (savedSettings) {
+      this.savedSettingsList = JSON.parse(savedSettings);
+      this.updatePaginatedSettings();
+    }
+  }
+
+  saveSettingsToList() {
+    const newSetting = {
+      brandName: this.brandName,
+      logo: this.logoPreview,
+      primaryColor: this.primaryColor,
+    };
+    this.savedSettingsList.push(newSetting);
+    localStorage.setItem(
+      'savedSettingsList',
+      JSON.stringify(this.savedSettingsList)
+    );
+    this.updatePaginatedSettings();
+  }
+
+  deleteSavedSetting(index: number) {
+    this.savedSettingsList.splice(index, 1);
+    localStorage.setItem(
+      'savedSettingsList',
+      JSON.stringify(this.savedSettingsList)
+    );
+    this.updatePaginatedSettings();
+  }
+
+  applySavedSetting(index: number) {
+    const setting = this.savedSettingsList[index];
+    this.brandName = setting.brandName;
+    this.logoPreview = setting.logo;
+    this.primaryColor = setting.primaryColor;
+    this.saveSettings();
+  }
+
+  updatePaginatedSettings() {
+    const startIndex = this.pageIndex * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedSettingsList = this.savedSettingsList.slice(
+      startIndex,
+      endIndex
+    );
   }
 
   getPreviousRuns() {
@@ -1426,8 +1478,9 @@ export class AppComponent {
     this.currentLogo = this.logoPreview;
     this.currentPrimaryColor = this.primaryColor;
 
-    // Apply dynamic theming for all buttons
+    // Apply dynamic theming
     this.applyDynamicTheme();
+    this.saveSettingsToList();
 
     this.snackBar.open('Settings saved successfully!', 'Close', {
       duration: 3000,
@@ -1506,21 +1559,12 @@ export class AppComponent {
           background-color: ${color} !important;
         }
         
-        .mat-button.mat-primary,
-        .mat-icon-button.mat-primary,
-        .mat-stroked-button.mat-primary {
-          color: ${color} !important;
-        }
-
-        .mat-flat-button.mat-primary,
-        .mat-raised-button.mat-primary,
-        .mat-fab.mat-primary,
-        .mat-mini-fab.mat-primary {
+        .mat-raised-button.mat-primary {
           background-color: ${color} !important;
         }
 
-        .mat-stroked-button.mat-primary {
-          border-color: ${color} !important;
+        .mat-icon-button.mat-primary {
+          color: ${color} !important;
         }
         
         .mat-form-field.mat-focused .mat-form-field-label {
@@ -1533,11 +1577,6 @@ export class AppComponent {
         
         .mat-checkbox-checked .mat-checkbox-background {
           background-color: ${color} !important;
-        }
-
-        .mat-button-toggle-checked {
-          background-color: ${color} !important;
-          color: #fff !important;
         }
       `;
     }
