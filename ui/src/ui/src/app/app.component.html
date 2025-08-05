@@ -870,7 +870,7 @@ limitations under the License.
       <mat-divider style="margin: 1rem 0;"></mat-divider>
       
       <!-- 1. Logo Section -->
-      <div class="logo-section" style="text-align: center;">
+      <div *ngIf="pageIndex === 0" class="logo-section" style="text-align: center;">
         <img
           [src]="logoPreview || './assets/dummy.svg'"
           alt="Logo"
@@ -883,7 +883,7 @@ limitations under the License.
       <mat-divider style="margin: 1rem 0;"></mat-divider>
 
       <!-- 2. Brand Name Input -->
-      <mat-form-field appearance="fill" style="width: 90%;">
+      <mat-form-field *ngIf="pageIndex === 0" appearance="fill" style="width: 90%;">
         <mat-label>Brand Name</mat-label>
         <input matInput [(ngModel)]="brandName" />
       </mat-form-field>
@@ -891,7 +891,7 @@ limitations under the License.
       <mat-divider style="margin: 1rem 0;"></mat-divider>
 
       <!-- 3. Color Pickers -->
-      <div class="colorPickerSec">
+      <div *ngIf="pageIndex === 1" class="colorPickerSec">
         <label for="colorPicker" style="font-weight: 500; display: block; margin-bottom: 8px;">
           Choose Theme Color
         </label>
@@ -915,6 +915,13 @@ limitations under the License.
           Reset
         </button>
       </div>
+      <mat-paginator
+        [length]="3"
+        [pageSize]="2"
+        (page)="handlePageEvent($event)"
+        aria-label="Select page of settings"
+      >
+      </mat-paginator>
     </div>
   </mat-sidenav>
 </mat-sidenav-container>
